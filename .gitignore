@@ -1,0 +1,31 @@
+# Dependency directories
+node_modules/
+jspm_packages/
+web_modules/
+
+# Next.js build output
+.next/
+out/
+build/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Local uploads and data
+backend/uploads/
+backend/celerybeat-schedule*
+celerybeat-schedule*
+
+# OS Files
+.DS_Store
+Thumbs.db

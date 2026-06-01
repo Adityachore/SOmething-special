@@ -1,0 +1,108 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ai_cmp_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-aicmp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aicmp_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-ai_cmp}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aicmp} -d ${POSTGRES_DB:-ai_cmp}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: ai_cmp_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai_cmp_backend
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - uploads_data:/app/uploads
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-aicmp}:${POSTGRES_PASSWORD:-aicmp_secret}@postgres:5432/${POSTGRES_DB:-ai_cmp}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-change_this_secret_key_in_production}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - UPLOAD_DIR=/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai_cmp_celery
+    command: celery -A app.workers.celery_app worker --loglevel=info -Q ai_tasks,notifications,escalation
+    volumes:
+      - ./backend:/app
+      - uploads_data:/app/uploads
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-aicmp}:${POSTGRES_PASSWORD:-aicmp_secret}@postgres:5432/${POSTGRES_DB:-ai_cmp}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-change_this_secret_key_in_production}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - UPLOAD_DIR=/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ai_cmp_celery_beat
+    command: celery -A app.workers.celery_app beat --loglevel=info --scheduler celery.beat:PersistentScheduler
+    volumes:
+      - ./backend:/app
+      - celery_beat_data:/app/celerybeat
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER:-aicmp}:${POSTGRES_PASSWORD:-aicmp_secret}@postgres:5432/${POSTGRES_DB:-ai_cmp}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-change_this_secret_key_in_production}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # frontend: (will be added in Phase 6)
+  # Uncomment once Next.js frontend is created
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:
+  celery_beat_data:
