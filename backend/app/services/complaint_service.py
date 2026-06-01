@@ -97,7 +97,17 @@ class ComplaintService:
     # ── Create ────────────────────────────────────────────────────────────────
 
     @staticmethod
-    async def create(db: AsyncSession, user: User, title: str, description: str) -> Complaint:
+    async def create(
+        db: AsyncSession,
+        user: User,
+        title: str,
+        description: str,
+        employee_department: str | None = None,
+        employee_category: str | None = None,
+        employee_subcategory: str | None = None,
+        is_anonymous: bool = False,
+        visibility_settings: str | None = None,
+    ) -> Complaint:
         from datetime import timedelta
         complaint = Complaint(
             tenant_id=user.tenant_id,
@@ -107,13 +117,25 @@ class ComplaintService:
             status=ComplaintStatus.PENDING,
             priority_level=PriorityLevel.MEDIUM,  # Default until AI processes
             sla_due_at=datetime.now(timezone.utc) + timedelta(hours=settings.SLA_HOURS_DEFAULT),
+            employee_department=employee_department,
+            employee_category=employee_category,
+            employee_subcategory=employee_subcategory,
+            is_anonymous=is_anonymous,
+            visibility_settings=visibility_settings,
+            primary_department=employee_department,
+            sub_category=employee_subcategory,
         )
         db.add(complaint)
         await db.flush()  # get complaint.id
 
         await ComplaintService._log_audit(
             db, complaint.id, user.id, AuditActionType.CREATED,
-            new_val={"title": title, "status": ComplaintStatus.PENDING.value}
+            new_val={
+                "title": title,
+                "status": ComplaintStatus.PENDING.value,
+                "employee_department": employee_department,
+                "is_anonymous": is_anonymous
+            }
         )
         await db.commit()
         return await ComplaintService._get_with_relations(db, complaint.id, user.tenant_id)

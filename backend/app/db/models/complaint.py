@@ -50,6 +50,15 @@ class Complaint(Base):
     ai_priority_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     ai_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # Employee-populated fields
+    employee_department: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    employee_category: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    employee_subcategory: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # Privacy and visibility
+    is_anonymous: Mapped[bool] = mapped_column(Boolean, default=False)
+    visibility_settings: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     # Status & Priority
     status: Mapped[ComplaintStatus] = mapped_column(
         Enum(ComplaintStatus), nullable=False, default=ComplaintStatus.PENDING, index=True

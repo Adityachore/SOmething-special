@@ -9,6 +9,11 @@ from app.db.models.complaint import ComplaintStatus, PriorityLevel, PrioritySour
 class ComplaintCreate(BaseModel):
     title: str
     description: str
+    employee_department: str | None = None
+    employee_category: str | None = None
+    employee_subcategory: str | None = None
+    is_anonymous: bool = False
+    visibility_settings: str | None = None
 
     @field_validator("description")
     @classmethod
@@ -113,6 +118,11 @@ class ComplaintResponse(BaseModel):
     ai_categorization_reason: str | None
     ai_priority_reason: str | None
     ai_summary: str | None
+    employee_department: str | None
+    employee_category: str | None
+    employee_subcategory: str | None
+    is_anonymous: bool
+    visibility_settings: str | None
     status: ComplaintStatus
     priority_level: PriorityLevel
     priority_score: float

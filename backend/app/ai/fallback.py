@@ -17,9 +17,18 @@ DEPT_KEYWORDS = {
 
 HR_KEYWORDS = {"harassment", "bullying", "discrimination", "misconduct", "hostile", "abuse", "inappropriate", "assault"}
 
-CRITICAL_KEYWORDS = {"violence", "assault", "threat", "illegal", "law enforcement", "safety", "danger"}
-HIGH_KEYWORDS = {"urgent", "immediate", "harassment", "discrimination", "unfair", "severe"}
-LOW_KEYWORDS = {"minor", "small", "suggestion", "feedback", "nice to have"}
+CRITICAL_KEYWORDS = {
+    "violence", "assault", "threat", "safety", "danger", "hazard", 
+    "fraud", "theft", "embezzlement", "bribe", "bribery", "corruption", "integrity",
+    "illegal"
+}
+HIGH_KEYWORDS = {
+    "urgent", "immediate", "harassment", "discrimination", "unfair", "severe", 
+    "abuse", "bullying", "misconduct", "retaliation", "hostile"
+}
+LOW_KEYWORDS = {
+    "suggestion", "feedback", "nice to have", "idea", "minor", "small"
+}
 
 
 def _text(title: str, desc: str) -> str:
@@ -50,16 +59,17 @@ def fallback_categorize(title: str, description: str) -> CategorizationResult:
 
 def fallback_priority(title: str, description: str, is_hr_sensitive: bool) -> PriorityResult:
     text = _text(title, description)
-    words = set(text.split())
+    import re
+    words = set(re.findall(r'\b\w+\b', text))
 
-    if CRITICAL_KEYWORDS & words:
-        level, score = "CRITICAL", 0.9
-    elif HIGH_KEYWORDS & words or is_hr_sensitive:
-        level, score = "HIGH", 0.7
-    elif LOW_KEYWORDS & words:
-        level, score = "LOW", 0.2
+    if any(kw in text for kw in CRITICAL_KEYWORDS) or (CRITICAL_KEYWORDS & words):
+        level, score = "CRITICAL", 0.95
+    elif any(kw in text for kw in HIGH_KEYWORDS) or (HIGH_KEYWORDS & words) or is_hr_sensitive:
+        level, score = "HIGH", 0.75
+    elif any(kw in text for kw in LOW_KEYWORDS) or (LOW_KEYWORDS & words):
+        level, score = "LOW", 0.15
     else:
-        level, score = "MEDIUM", 0.5
+        level, score = "MEDIUM", 0.45
 
     return PriorityResult(
         priority_level=level,

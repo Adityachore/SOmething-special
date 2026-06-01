@@ -7,16 +7,19 @@ import ClientDate from '@/components/ClientDate';
 import {
   getComplaint, startComplaint, assignComplaint, resolveComplaint, rejectComplaint,
   reopenComplaint, getNotes, addNote, getComplaintAuditLogs, uploadAttachment, getUsers,
-  overrideComplaint
+  overrideComplaint, deleteAttachment
 } from '@/lib/api';
+import api from '@/lib/api';
+import { useAuth } from '@/lib/auth-context';
 import {
   ArrowLeft, Play, CheckCircle, XCircle, UserPlus, RotateCcw, Brain,
-  Clock, Paperclip, Upload, Send, X, Eye, EyeOff
+  Clock, Paperclip, Upload, Send, X, Eye, EyeOff, Trash2
 } from 'lucide-react';
 
 export default function HandlerComplaintDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { user: currentUser } = useAuth();
   const [c, setC] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState<any[]>([]);
@@ -34,6 +37,36 @@ export default function HandlerComplaintDetail() {
   const [rejectForm, setRejectForm] = useState({ reason:'', category:'' });
   const [noteForm, setNoteForm] = useState({ content:'', is_visible_to_employee:false });
   const [overrideForm, setOverrideForm] = useState({ primary_department: '', sub_category: '', priority_level: '', is_hr_sensitive: false });
+
+  // Attachment download
+  const handleDownloadAttachment = async (attachmentId: string, filename: string) => {
+    try {
+      const response = await api.get(`/complaints/attachments/${attachmentId}`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+    } catch {
+      setMsg('Failed to download attachment.');
+    }
+  };
+
+  // Attachment delete
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!confirm('Are you sure you want to delete this attachment?')) return;
+    try {
+      await deleteAttachment(attachmentId);
+      load();
+      setMsg('Attachment removed successfully.');
+    } catch {
+      setMsg('Failed to delete attachment.');
+    }
+  };
 
   useEffect(() => {
     if (c) {
@@ -68,7 +101,27 @@ export default function HandlerComplaintDetail() {
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    try { await uploadAttachment(id, file); load(); setMsg('File uploaded!'); } catch { setMsg('Upload failed.'); }
+
+    const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.png', '.jpg', '.jpeg'];
+    const MAX_SIZE = 10 * 1024 * 1024;
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+
+    if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      setMsg('Unsupported file type. Allowed: PDF, DOCX, PNG, JPG, JPEG');
+      return;
+    }
+    if (file.size > MAX_SIZE) {
+      setMsg('File exceeds maximum size of 10 MB.');
+      return;
+    }
+
+    try {
+      await uploadAttachment(id, file);
+      load();
+      setMsg('File uploaded successfully!');
+    } catch (err: any) {
+      setMsg(err.response?.data?.message || err.response?.data?.detail || 'Upload failed.');
+    }
   };
 
   const handleAddNote = async (e: React.FormEvent) => {
@@ -132,7 +185,7 @@ export default function HandlerComplaintDetail() {
         <div className="glass" style={{ padding:20 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}><Clock size={16} style={{ color:'#60a5fa' }}/><span style={{ fontSize:14, fontWeight:600, color:'#f1f5f9' }}>Details</span></div>
           {[
-            {l:'Employee ID',v:c.employee_id?.slice(0,8)},{l:'Assigned To',v:c.assigned_to_user_id?.slice(0,8)||'Unassigned'},
+            {l:'Employee ID',v:c.employee_id === 'anonymous' ? 'Anonymous' : (c.employee_id?.slice(0,8) || '—')},{l:'Assigned To',v:c.assigned_to_user_id?.slice(0,8)||'Unassigned'},
             {l:'Escalation',v:`Level ${c.escalation_level}`},{l:'Priority Score',v:c.priority_score?.toFixed(2)},
             {l:'Created',v:<ClientDate date={c.created_at} />},{l:'SLA Due',v:c.sla_due_at ? <ClientDate date={c.sla_due_at} /> : '—'},
             {l:'Resolved',v:c.resolved_at ? <ClientDate date={c.resolved_at} /> : '—'},
@@ -169,8 +222,19 @@ export default function HandlerComplaintDetail() {
         </div>
         {c.attachments?.map((a:any) => (
           <div key={a.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
-            <Paperclip size={12} style={{ color:'#475569' }}/><span style={{ fontSize:13, color:'#94a3b8', flex:1 }}>{a.original_name}</span>
-            <span style={{ fontSize:11, color:'#475569' }}>{(a.size_bytes/1024).toFixed(1)} KB</span>
+            <Paperclip size={12} style={{ color:'#64748b' }}/>
+            <span style={{ fontSize:13, color:'#94a3b8', flex:1 }}>{a.original_name}</span>
+            <span style={{ fontSize:11, color:'#64748b', marginRight:10 }}>{(a.size_bytes/1024).toFixed(1)} KB</span>
+            <button className="btn btn-secondary" onClick={() => handleDownloadAttachment(a.id, a.original_name)} style={{ padding: '4px 8px', fontSize: 11 }}>Download</button>
+            {currentUser?.role === 'ADMIN' && (
+              <button 
+                className="btn btn-danger" 
+                onClick={() => handleDeleteAttachment(a.id)} 
+                style={{ padding: '4px 8px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 2 }}
+              >
+                <Trash2 size={11}/> Delete
+              </button>
+            )}
           </div>
         ))}
       </div>

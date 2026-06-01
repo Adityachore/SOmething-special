@@ -35,8 +35,15 @@ export const logout = (refresh_token: string) =>
   api.post('/auth/logout', { refresh_token });
 
 // ─── Complaints (Employee) ───
-export const createComplaint = (data: { title: string; description: string }) =>
-  api.post('/complaints', data);
+export const createComplaint = (data: {
+  title: string;
+  description: string;
+  employee_department?: string | null;
+  employee_category?: string | null;
+  employee_subcategory?: string | null;
+  is_anonymous?: boolean;
+  visibility_settings?: string | null;
+}) => api.post('/complaints', data);
 export const getMyComplaints = (params?: Record<string, any>) =>
   api.get('/complaints/my', { params });
 export const withdrawComplaint = (id: string) =>
@@ -86,6 +93,8 @@ export const uploadAttachment = (complaintId: string, file: File) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
+export const deleteAttachment = (attachmentId: string) =>
+  api.delete(`/complaints/attachments/${attachmentId}`);
 
 // ─── Admin ───
 export const getAnalytics = () => api.get('/admin/analytics/overview');

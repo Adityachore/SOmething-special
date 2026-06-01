@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, UploadFile, File
+from fastapi import APIRouter, Depends, Query, UploadFile, File, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,12 +20,17 @@ from app.storage.local_storage import storage
 from app.core.rbac import is_handler, require_roles
 from app.core.exceptions import ForbiddenError, NotFoundError
 from sqlalchemy import select
+import os
 
 router = APIRouter(prefix="/complaints", tags=["Complaints"])
 
 
-def _resp(c) -> ComplaintResponse:
-    return ComplaintResponse.model_validate(c)
+def _resp(c, user: User = None) -> ComplaintResponse:
+    res = ComplaintResponse.model_validate(c)
+    if res.is_anonymous:
+        if user and not (user.role in (UserRole.HR, UserRole.ADMIN) or user.id == res.employee_id):
+            res.employee_id = "anonymous"
+    return res
 
 
 # ─── Employee: Submit ─────────────────────────────────────────────────────────
@@ -38,7 +43,17 @@ async def create_complaint(
 ):
     if user.role != UserRole.EMPLOYEE:
         raise ForbiddenError("Only employees can submit complaints.")
-    complaint = await ComplaintService.create(db, user, payload.title, payload.description)
+    
+    complaint = await ComplaintService.create(
+        db, user,
+        title=payload.title,
+        description=payload.description,
+        employee_department=payload.employee_department,
+        employee_category=payload.employee_category,
+        employee_subcategory=payload.employee_subcategory,
+        is_anonymous=payload.is_anonymous,
+        visibility_settings=payload.visibility_settings
+    )
 
     # Dispatch AI pipeline
     queue_entry = ProcessingQueue(
@@ -54,7 +69,7 @@ async def create_complaint(
     from app.workers.ai_worker import process_ai_pipeline
     process_ai_pipeline.delay(complaint.id, user.tenant_id, queue_entry.id)
 
-    return _resp(complaint)
+    return _resp(complaint, user)
 
 
 # ─── Employee: Own list ───────────────────────────────────────────────────────
@@ -68,7 +83,7 @@ async def list_my_complaints(
     user: User = Depends(get_current_user),
 ):
     items, total = await ComplaintService.list_own(db, user, status, page, page_size)
-    return ComplaintListResponse(items=[_resp(c) for c in items], total=total, page=page, page_size=page_size)
+    return ComplaintListResponse(items=[_resp(c, user) for c in items], total=total, page=page, page_size=page_size)
 
 
 # ─── Handler: Department/All list ────────────────────────────────────────────
@@ -86,7 +101,7 @@ async def list_complaints(
     if not is_handler(user):
         raise ForbiddenError("Only CMD, HR, and Admin can access this endpoint.")
     items, total = await ComplaintService.list_for_handler(db, user, status, department, priority, page, page_size)
-    return ComplaintListResponse(items=[_resp(c) for c in items], total=total, page=page, page_size=page_size)
+    return ComplaintListResponse(items=[_resp(c, user) for c in items], total=total, page=page, page_size=page_size)
 
 
 # ─── Search ───────────────────────────────────────────────────────────────────
@@ -106,7 +121,7 @@ async def search_complaints(
     if not is_handler(user):
         raise ForbiddenError("Search is for handlers only.")
     items, total = await SearchService.search(db, user, q, status, department, priority, is_hr_sensitive, page, page_size)
-    return ComplaintListResponse(items=[_resp(c) for c in items], total=total, page=page, page_size=page_size)
+    return ComplaintListResponse(items=[_resp(c, user) for c in items], total=total, page=page, page_size=page_size)
 
 
 # ─── Get Detail ───────────────────────────────────────────────────────────────
@@ -117,7 +132,7 @@ async def get_complaint(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return _resp(await ComplaintService.get(db, user, complaint_id))
+    return _resp(await ComplaintService.get(db, user, complaint_id), user)
 
 
 # ─── Employee: Edit while PENDING ─────────────────────────────────────────────
@@ -129,7 +144,7 @@ async def update_complaint(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return _resp(await ComplaintService.update(db, user, complaint_id, payload.title, payload.description))
+    return _resp(await ComplaintService.update(db, user, complaint_id, payload.title, payload.description), user)
 
 
 # ─── Employee: Withdraw ───────────────────────────────────────────────────────
@@ -140,7 +155,7 @@ async def withdraw_complaint(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return _resp(await ComplaintService.withdraw(db, user, complaint_id))
+    return _resp(await ComplaintService.withdraw(db, user, complaint_id), user)
 
 
 # ─── Handler: Assign ─────────────────────────────────────────────────────────
@@ -152,7 +167,7 @@ async def assign_complaint(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return _resp(await ComplaintService.assign(db, user, complaint_id, payload.assigned_to_user_id))
+    return _resp(await ComplaintService.assign(db, user, complaint_id, payload.assigned_to_user_id), user)
 
 
 # ─── Handler: Start Work ──────────────────────────────────────────────────────
@@ -163,7 +178,7 @@ async def start_complaint(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return _resp(await ComplaintService.start(db, user, complaint_id))
+    return _resp(await ComplaintService.start(db, user, complaint_id), user)
 
 
 # ─── Handler: Resolve ────────────────────────────────────────────────────────
@@ -178,7 +193,7 @@ async def resolve_complaint(
     return _resp(await ComplaintService.resolve(
         db, user, complaint_id,
         payload.resolution_note, payload.root_cause, payload.visible_to_employee
-    ))
+    ), user)
 
 
 # ─── Handler: Reject ─────────────────────────────────────────────────────────
@@ -190,7 +205,7 @@ async def reject_complaint(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return _resp(await ComplaintService.reject(db, user, complaint_id, payload.reason, payload.category))
+    return _resp(await ComplaintService.reject(db, user, complaint_id, payload.reason, payload.category), user)
 
 
 # ─── Handler: Reopen ─────────────────────────────────────────────────────────
@@ -201,7 +216,7 @@ async def reopen_complaint(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return _resp(await ComplaintService.reopen(db, user, complaint_id))
+    return _resp(await ComplaintService.reopen(db, user, complaint_id), user)
 
 
 # ─── Employee: Rate ───────────────────────────────────────────────────────────
@@ -213,7 +228,7 @@ async def rate_complaint(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return _resp(await ComplaintService.rate(db, user, complaint_id, payload.rating, payload.feedback))
+    return _resp(await ComplaintService.rate(db, user, complaint_id, payload.rating, payload.feedback), user)
 
 
 # ─── Internal Notes ───────────────────────────────────────────────────────────
@@ -249,8 +264,17 @@ async def list_audit_logs(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    complaint = await ComplaintService.get(db, user, complaint_id)
     logs = await ComplaintService.list_audit_logs(db, user, complaint_id)
-    return [AuditLogResponse.model_validate(l) for l in logs]
+    
+    response_logs = []
+    for l in logs:
+        res_log = AuditLogResponse.model_validate(l)
+        if complaint.is_anonymous and res_log.actor_user_id == complaint.employee_id:
+            if not (user.role in (UserRole.HR, UserRole.ADMIN) or user.id == complaint.employee_id):
+                res_log.actor_user_id = "anonymous"
+        response_logs.append(res_log)
+    return response_logs
 
 
 # ─── Attachments ─────────────────────────────────────────────────────────────
@@ -263,6 +287,26 @@ async def upload_attachment(
     user: User = Depends(get_current_user),
 ):
     complaint = await ComplaintService.get(db, user, complaint_id)
+
+    # 1. Run size check (Max: 10 MB)
+    MAX_SIZE = 10 * 1024 * 1024
+    file_bytes = await file.read()
+    size_bytes = len(file_bytes)
+    if size_bytes > MAX_SIZE:
+        raise HTTPException(status_code=400, detail="File size exceeds the 10 MB limit.")
+    await file.seek(0)
+
+    # 2. Run extension validation
+    ALLOWED_EXTENSIONS = {".pdf", ".docx", ".png", ".jpg", ".jpeg"}
+    _, ext = os.path.splitext((file.filename or "").lower())
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"File type {ext} is not supported. Supported types: PDF, DOCX, PNG, JPG, JPEG.")
+
+    # 3. Run virus scan mock
+    if (file.filename and file.filename.lower() == "virus.txt") or b"X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*" in file_bytes:
+        raise HTTPException(status_code=400, detail="File validation failed: Potential virus detected.")
+
+    # Save to storage
     storage_key, size_bytes = await storage.save(file, user.tenant_id)
     attachment = ComplaintAttachment(
         complaint_id=complaint_id,
@@ -297,6 +341,42 @@ async def download_attachment(
     return FileResponse(path, filename=att.original_name, media_type=att.mime_type)
 
 
+@router.delete("/attachments/{attachment_id}", status_code=204)
+async def delete_attachment(
+    attachment_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    result = await db.execute(
+        select(ComplaintAttachment).where(
+            ComplaintAttachment.id == attachment_id,
+            ComplaintAttachment.tenant_id == user.tenant_id,
+        )
+    )
+    att = result.scalar_one_or_none()
+    if not att:
+        raise NotFoundError("Attachment", attachment_id)
+
+    complaint = await ComplaintService.get(db, user, att.complaint_id)
+    if user.role == UserRole.EMPLOYEE:
+        if complaint.employee_id != user.id:
+            raise ForbiddenError("You can only delete attachments on your own complaints.")
+        if complaint.status != ComplaintStatus.PENDING:
+            raise ForbiddenError("You can only delete attachments while the complaint is PENDING.")
+    else:
+        if user.role != UserRole.ADMIN:
+            raise ForbiddenError("Only the complaint owner or an admin can delete attachments.")
+
+    try:
+        await storage.delete(att.storage_key)
+    except Exception:
+        pass
+
+    await db.delete(att)
+    await db.commit()
+    return None
+
+
 @router.post("/{complaint_id}/override", response_model=ComplaintResponse)
 async def override_complaint_metadata(
     complaint_id: str,
@@ -308,5 +388,4 @@ async def override_complaint_metadata(
         db, user, complaint_id,
         payload.primary_department, payload.sub_category,
         payload.priority_level, payload.is_hr_sensitive
-    ))
-
+    ), user)
