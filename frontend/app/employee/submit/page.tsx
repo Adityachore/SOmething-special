@@ -233,7 +233,7 @@ export default function SubmitComplaint() {
 
             {/* Privacy and Anonymity */}
             <div className="info-box" style={{ marginBottom: 20, background: 'rgba(30, 41, 59, 0.5)', border: '1px solid var(--border)' }}>
-              <div style={{ display: 'flex', items: 'flex-start', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
                 <Shield size={18} style={{ color: '#818cf8', marginTop: 2, flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#f1f5f9', marginBottom: 4 }}>Privacy Settings</div>
