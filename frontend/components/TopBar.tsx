@@ -43,13 +43,13 @@ export default function TopBar({ title }: { title?: string }) {
         <Bell size={15}/>
         <span style={{
           position:'absolute', top:5, right:5, width:6, height:6,
-          background:'#8b5cf6', borderRadius:'50%', border:'1.5px solid #080d1a'
+          background:'var(--purple)', borderRadius:'50%', border:'1.5px solid var(--bg-primary)'
         }} className="animate-pulse-dot"/>
       </button>
       {/* Avatar */}
       <div style={{
         width:34, height:34, borderRadius:9, flexShrink:0,
-        background:'linear-gradient(135deg,#8b5cf6,#6366f1)',
+        background:'linear-gradient(135deg,var(--purple),var(--purple-light))',
         display:'flex', alignItems:'center', justifyContent:'center',
         fontSize:13, fontWeight:700, color:'white'
       }}>

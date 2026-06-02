@@ -48,7 +48,7 @@ export default function EmployeeComplaints() {
                   <tr key={c.id} style={{ cursor:'pointer' }} onClick={() => router.push(`/employee/complaints/${c.id}`)}>
                     <td>
                       <div style={{ fontWeight:500, color:'#e2e8f0' }}>{c.title}</div>
-                      <div style={{ fontSize:11, color:'#8b5cf6', marginTop:2 }}>#{c.id.slice(0,8)}</div>
+                      <div style={{ fontSize:11, color:'var(--purple-light)', marginTop:2 }}>#{c.id.slice(0,8)}</div>
                     </td>
                     <td><StatusBadge status={c.status}/></td>
                     <td><PriorityBadge priority={c.priority_level}/></td>

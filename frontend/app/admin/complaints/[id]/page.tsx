@@ -96,7 +96,7 @@ export default function HandlerComplaintDetail() {
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8, flexWrap:'wrap' }}>
               <h2 style={{ fontSize:18, fontWeight:700, color:'#f1f5f9' }}>{c.title}</h2>
-              <span style={{ fontSize:11, color:'#8b5cf6', background:'rgba(139,92,246,0.1)', padding:'2px 8px', borderRadius:6 }}>#{c.id.slice(0,8)}</span>
+              <span style={{ fontSize:11, color:'var(--purple-light)', background:'rgba(16,185,129,0.1)', padding:'2px 8px', borderRadius:6 }}>#{c.id.slice(0,8)}</span>
             </div>
             <p style={{ fontSize:13, color:'#94a3b8', lineHeight:1.7, marginBottom:14 }}>{c.description}</p>
             <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
@@ -118,7 +118,7 @@ export default function HandlerComplaintDetail() {
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20, marginBottom:20 }}>
         <div className="glass" style={{ padding:20 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8 }}><Brain size={16} style={{ color:'#a78bfa' }}/><span style={{ fontSize:14, fontWeight:600, color:'#f1f5f9' }}>AI Analysis</span></div>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}><Brain size={16} style={{ color:'#34d399' }}/><span style={{ fontSize:14, fontWeight:600, color:'#f1f5f9' }}>AI Analysis</span></div>
             <button className="btn btn-secondary" style={{ fontSize:11, padding:'4px 8px' }} onClick={() => setModal('override')}>Override</button>
           </div>
           {[{l:'Summary',v:c.ai_summary},{l:'Category Reason',v:c.ai_categorization_reason},{l:'Priority Reason',v:c.ai_priority_reason},{l:'Sub-category',v:c.sub_category},{l:'Department',v:c.primary_department}].map(i => i.v && (
@@ -222,7 +222,7 @@ export default function HandlerComplaintDetail() {
                   {auditLogs.map((l:any) => (
                     <tr key={l.id}>
                       <td style={{ fontSize:12, color:'#64748b', whiteSpace:'nowrap' }}><ClientDate date={l.created_at} /></td>
-                      <td><span className="badge" style={{ background:'rgba(139,92,246,0.1)', color:'#a78bfa', border:'1px solid rgba(139,92,246,0.2)' }}>{l.action_type}</span></td>
+                      <td><span className="badge" style={{ background:'rgba(16,185,129,0.1)', color:'#34d399', border:'1px solid rgba(16,185,129,0.2)' }}>{l.action_type}</span></td>
                       <td style={{ fontSize:12, color:'#94a3b8' }}>{l.actor_user_id?.slice(0,8) || 'System'}</td>
                       <td style={{ fontSize:12, color:'#64748b', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                         {l.new_value_json ? JSON.stringify(l.new_value_json).slice(0,60) : '—'}

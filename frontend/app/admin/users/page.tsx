@@ -5,7 +5,7 @@ import { getUsers, createUser, updateUser } from '@/lib/api';
 import ClientDate from '@/components/ClientDate';
 import { Plus, Edit3, X, UserPlus } from 'lucide-react';
 
-const ROLE_COLORS: Record<string,string> = { ADMIN:'#f59e0b', CMD:'#3b82f6', HR:'#8b5cf6', EMPLOYEE:'#10b981' };
+const ROLE_COLORS: Record<string,string> = { ADMIN:'#f59e0b', CMD:'#3b82f6', HR:'#06b6d4', EMPLOYEE:'#10b981' };
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
@@ -55,7 +55,7 @@ export default function AdminUsers() {
                   <tr key={u.id}>
                     <td>
                       <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-                        <div style={{ width:32, height:32, borderRadius:8, background:'linear-gradient(135deg,#8b5cf6,#6366f1)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'white', flexShrink:0 }}>{u.name?.[0]||'U'}</div>
+                        <div style={{ width:32, height:32, borderRadius:8, background:'linear-gradient(135deg,var(--purple),var(--purple-light))', display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'white', flexShrink:0 }}>{u.name?.[0]||'U'}</div>
                         <div><div style={{ fontSize:13, fontWeight:500, color:'#e2e8f0' }}>{u.name}</div><div style={{ fontSize:11, color:'#475569' }}>{u.email}</div></div>
                       </div>
                     </td>

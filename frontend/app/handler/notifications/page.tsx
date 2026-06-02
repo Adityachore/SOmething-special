@@ -31,11 +31,11 @@ export default function HandlerNotifications() {
       ) : (
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
           {items.map(n => (
-            <div key={n.id} className="glass" style={{ padding:'14px 18px', borderLeft: n.is_read ? '3px solid transparent' : '3px solid #8b5cf6', display:'flex', alignItems:'center', gap:14 }}>
+            <div key={n.id} className="glass" style={{ padding:'14px 18px', borderLeft: n.is_read ? '3px solid transparent' : '3px solid var(--purple)', display:'flex', alignItems:'center', gap:14 }}>
               <div style={{ flex:1 }}>
                 <div style={{ fontSize:13, fontWeight: n.is_read ? 400 : 600, color: n.is_read ? '#94a3b8' : '#e2e8f0' }}>{n.title}</div>
                 <div style={{ display:'flex', gap:10, marginTop:4 }}>
-                  <span className="badge" style={{ background:'rgba(139,92,246,0.1)', color:'#a78bfa', border:'1px solid rgba(139,92,246,0.2)', fontSize:10 }}>{n.type}</span>
+                  <span className="badge" style={{ background:'rgba(16,185,129,0.1)', color:'#34d399', border:'1px solid rgba(16,185,129,0.2)', fontSize:10 }}>{n.type}</span>
                   <span style={{ fontSize:11, color:'#475569' }}><ClientDate date={n.created_at} /></span>
                 </div>
               </div>

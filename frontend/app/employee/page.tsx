@@ -83,7 +83,7 @@ export default function EmployeeDashboard() {
                     <tr key={c.id} onClick={() => router.push(`/employee/complaints/${c.id}`)} style={{ cursor:'pointer' }}>
                       <td>
                         <div style={{ fontWeight:500, color:'#e2e8f0', maxWidth:200, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.title}</div>
-                        <div style={{ fontSize:11, color:'#8b5cf6', marginTop:2 }}>#{c.id.slice(0,8)}</div>
+                        <div style={{ fontSize:11, color:'var(--purple-light)', marginTop:2 }}>#{c.id.slice(0,8)}</div>
                       </td>
                       <td><StatusBadge status={c.status}/></td>
                       <td><PriorityBadge priority={c.priority_level}/></td>
@@ -105,7 +105,7 @@ export default function EmployeeDashboard() {
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
           <div className="info-box">
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
-              <div style={{ width:34, height:34, borderRadius:10, background:'linear-gradient(135deg,#8b5cf6,#6366f1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+              <div style={{ width:34, height:34, borderRadius:10, background:'linear-gradient(135deg,var(--purple),var(--purple-light))', display:'flex', alignItems:'center', justifyContent:'center' }}>
                 <Brain size={17} color="white"/>
               </div>
               <div>
@@ -117,7 +117,7 @@ export default function EmployeeDashboard() {
             <div style={{ marginTop:12, display:'flex', flexDirection:'column', gap:6 }}>
               {['Auto-categorization','Priority scoring','Smart routing','SLA tracking'].map(f => (
                 <div key={f} style={{ display:'flex', alignItems:'center', gap:7, fontSize:12, color:'#94a3b8' }}>
-                  <div style={{ width:5, height:5, borderRadius:'50%', background:'#8b5cf6', flexShrink:0 }}/>
+                  <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--purple)', flexShrink:0 }}/>
                   {f}
                 </div>
               ))}

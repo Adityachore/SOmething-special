@@ -132,7 +132,7 @@ export default function EmployeeComplaintDetail() {
               <>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
                   <h2 style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9' }}>{c.title}</h2>
-                  <span style={{ fontSize: 11, color: '#6366f1', background: 'rgba(99,102,241,0.1)', padding: '2px 8px', borderRadius: 6 }}>
+                  <span style={{ fontSize: 11, color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '2px 8px', borderRadius: 6 }}>
                     #{c.id.slice(0, 8)}
                   </span>
                 </div>
@@ -148,7 +148,7 @@ export default function EmployeeComplaintDetail() {
                 </span>
               )}
               {c.is_anonymous && (
-                <span className="badge" style={{ background: 'rgba(129,140,248,0.1)', color: '#818cf8', border: '1px solid rgba(129,140,248,0.2)' }}>
+                <span className="badge" style={{ background: 'rgba(52,211,153,0.1)', color: '#34d399', border: '1px solid rgba(52,211,153,0.2)' }}>
                   Anonymous
                 </span>
               )}
@@ -167,7 +167,7 @@ export default function EmployeeComplaintDetail() {
         {/* AI Analysis */}
         <div className="glass" style={{ padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <Brain size={16} style={{ color: '#818cf8' }}/>
+            <Brain size={16} style={{ color: '#34d399' }}/>
             <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>AI Analysis</span>
           </div>
           {[
@@ -191,7 +191,7 @@ export default function EmployeeComplaintDetail() {
             <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>Timeline</span>
           </div>
           {[
-            { label: 'Created', date: c.created_at, color: '#6366f1' },
+            { label: 'Created', date: c.created_at, color: '#10b981' },
             { label: 'Updated', date: c.updated_at, color: '#3b82f6' },
             { label: 'SLA Due', date: c.sla_due_at, color: c.sla_due_at && new Date(c.sla_due_at) < new Date() ? '#ef4444' : '#f59e0b' },
             { label: 'Resolved', date: c.resolved_at, color: '#10b981' },

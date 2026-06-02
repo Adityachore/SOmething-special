@@ -8,7 +8,7 @@ import ClientDate from '@/components/ClientDate';
 import { Users, Activity, Globe, FileText, ShieldCheck, Database, Server, Cpu, HardDrive } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from '@/lib/charts';
 
-const COLORS = ['#8b5cf6','#3b82f6','#06b6d4','#10b981','#f59e0b','#f97316'];
+const COLORS = ['#10b981','#059669','#34d399','#3b82f6','#06b6d4','#fbbf24'];
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -61,14 +61,14 @@ export default function AdminDashboard() {
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={trend}>
               <defs>
-                <linearGradient id="gt" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/><stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/></linearGradient>
-                <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
+                <linearGradient id="gt" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/><stop offset="95%" stopColor="#10b981" stopOpacity={0}/></linearGradient>
+                <linearGradient id="gr" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#34d399" stopOpacity={0.3}/><stop offset="95%" stopColor="#34d399" stopOpacity={0}/></linearGradient>
               </defs>
               <XAxis dataKey="date" tick={{ fontSize:11, fill:'#64748b' }} axisLine={false} tickLine={false}/>
               <YAxis tick={{ fontSize:11, fill:'#64748b' }} axisLine={false} tickLine={false}/>
               <Tooltip contentStyle={{ background:'#1e293b', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, fontSize:12 }}/>
-              <Area type="monotone" dataKey="total" stroke="#8b5cf6" strokeWidth={2} fill="url(#gt)"/>
-              <Area type="monotone" dataKey="resolved" stroke="#10b981" strokeWidth={2} fill="url(#gr)"/>
+              <Area type="monotone" dataKey="total" stroke="#10b981" strokeWidth={2} fill="url(#gt)"/>
+              <Area type="monotone" dataKey="resolved" stroke="#34d399" strokeWidth={2} fill="url(#gr)"/>
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -101,11 +101,11 @@ export default function AdminDashboard() {
         <div className="glass" style={{ padding:24 }}>
           <div className="section-header" style={{ marginBottom:12 }}>
             <div className="section-title" style={{ fontSize:14 }}>Recent Audit Logs</div>
-            <button onClick={() => router.push('/admin/audit')} style={{ fontSize:12, color:'#8b5cf6', background:'none', border:'none', cursor:'pointer' }}>View All →</button>
+            <button onClick={() => router.push('/admin/audit')} style={{ fontSize:12, color:'#10b981', background:'none', border:'none', cursor:'pointer' }}>View All →</button>
           </div>
           {logs.length > 0 ? logs.map((l:any, i:number) => (
             <div key={l.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 0', borderBottom: i<logs.length-1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
-              <div style={{ width:30, height:30, borderRadius:8, background:'rgba(139,92,246,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><ShieldCheck size={13} style={{ color:'#a78bfa' }}/></div>
+              <div style={{ width:30, height:30, borderRadius:8, background:'rgba(16,185,129,0.1)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}><ShieldCheck size={13} style={{ color:'#34d399' }}/></div>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:12, color:'#e2e8f0' }}>{l.action_type} · #{l.complaint_id?.slice(0,8)}</div>
                 <div style={{ fontSize:11, color:'#475569', marginTop:1 }}><ClientDate date={l.created_at} /></div>

@@ -43,9 +43,9 @@ export default function LoginPage() {
         <div style={{ textAlign:'center', marginBottom:40 }}>
           <div style={{
             width:64, height:64, borderRadius:20, margin:'0 auto 16px',
-            background:'linear-gradient(135deg,#8b5cf6,#3b82f6)',
+            background:'linear-gradient(135deg,#10b981,#059669)',
             display:'flex', alignItems:'center', justifyContent:'center',
-            boxShadow:'0 0 40px rgba(139,92,246,0.4)'
+            boxShadow:'0 0 40px rgba(16,185,129,0.3)'
           }}>
             <Shield size={28} color="white" />
           </div>
@@ -98,10 +98,10 @@ export default function LoginPage() {
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
               {[
-                { role:'admin', label:'Admin', color:'#8b5cf6', bg:'rgba(139,92,246,0.1)' },
-                { role:'hr', label:'HR Manager', color:'#3b82f6', bg:'rgba(59,130,246,0.1)' },
-                { role:'cmd', label:'CMD', color:'#06b6d4', bg:'rgba(6,182,212,0.1)' },
-                { role:'employee', label:'Employee', color:'#10b981', bg:'rgba(16,185,129,0.1)' },
+                { role:'admin', label:'Admin', color:'#10b981', bg:'rgba(16,185,129,0.1)' },
+                { role:'hr', label:'HR Manager', color:'#34d399', bg:'rgba(52,211,153,0.1)' },
+                { role:'cmd', label:'CMD', color:'#fbbf24', bg:'rgba(245,158,11,0.1)' },
+                { role:'employee', label:'Employee', color:'#60a5fa', bg:'rgba(96,165,250,0.1)' },
               ].map(({ role, label, color, bg }) => (
                 <button key={role} onClick={() => quickLogin(role)}
                   style={{ padding:'8px 12px', borderRadius:10, border:`1px solid ${color}33`, background:bg, color, fontSize:13, fontWeight:500, cursor:'pointer', transition:'all 0.15s' }}

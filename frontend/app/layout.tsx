@@ -16,9 +16,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body suppressHydrationWarning>
         <AuthProvider>
           {/* BG orbs for depth */}
-          <div className="bg-orb" style={{ width:600, height:600, top:-200, left:-200, background:'#8b5cf6' }} />
-          <div className="bg-orb" style={{ width:400, height:400, top:'40%', right:-150, background:'#3b82f6' }} />
-          <div className="bg-orb" style={{ width:300, height:300, bottom:-100, left:'30%', background:'#06b6d4' }} />
+          <div className="bg-orb" style={{ width:600, height:600, top:-200, left:-200, background:'#065f46' }} />
+          <div className="bg-orb" style={{ width:400, height:400, top:'40%', right:-150, background:'#047857' }} />
+          <div className="bg-orb" style={{ width:300, height:300, bottom:-100, left:'30%', background:'#14532d' }} />
           <div style={{ position:'relative', zIndex:1, height:'100vh', overflow:'hidden' }}>{children}</div>
         </AuthProvider>
       </body>

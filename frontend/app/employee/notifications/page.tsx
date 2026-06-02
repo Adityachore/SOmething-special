@@ -44,14 +44,14 @@ export default function EmployeeNotifications() {
           {items.map(n => (
             <div key={n.id} className="glass" style={{
               padding:'14px 18px',
-              borderLeft: n.is_read ? '3px solid transparent' : '3px solid #8b5cf6',
+              borderLeft: n.is_read ? '3px solid transparent' : '3px solid var(--purple)',
               display:'flex', alignItems:'center', gap:14,
-              background: n.is_read ? undefined : 'rgba(139,92,246,0.04)'
+              background: n.is_read ? undefined : 'rgba(16,185,129,0.04)'
             }}>
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:13, fontWeight: n.is_read ? 400 : 600, color: n.is_read ? '#94a3b8' : '#e2e8f0' }}>{n.title}</div>
                 <div style={{ display:'flex', gap:10, marginTop:4 }}>
-                  <span className="badge" style={{ background:'rgba(139,92,246,0.1)', color:'#a78bfa', border:'1px solid rgba(139,92,246,0.2)', fontSize:10 }}>{n.type}</span>
+                  <span className="badge" style={{ background:'rgba(16,185,129,0.1)', color:'#34d399', border:'1px solid rgba(16,185,129,0.2)', fontSize:10 }}>{n.type}</span>
                   <span style={{ fontSize:11, color:'#475569' }}><ClientDate date={n.created_at} /></span>
                 </div>
               </div>

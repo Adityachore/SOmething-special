@@ -47,7 +47,7 @@ export default function AdminComplaints() {
               <tbody>
                 {complaints.map(c => (
                   <tr key={c.id}>
-                    <td><div style={{ fontWeight:500, color:'#e2e8f0' }}>{c.title}</div><div style={{ fontSize:11, color:'#8b5cf6' }}>#{c.id.slice(0,8)}</div></td>
+                    <td><div style={{ fontWeight:500, color:'#e2e8f0' }}>{c.title}</div><div style={{ fontSize:11, color:'var(--purple-light)' }}>#{c.id.slice(0,8)}</div></td>
                     <td style={{ fontSize:13, color:'#94a3b8' }}>{c.primary_department||'—'}</td>
                     <td><PriorityBadge priority={c.priority_level}/></td>
                     <td><StatusBadge status={c.status}/></td>

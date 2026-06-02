@@ -1,14 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #0f172a;       /* Slate 900 */
-  --bg-secondary: #1e293b;     /* Slate 800 */
-  --bg-card: #1e293b;          /* Slate 800 */
-  --bg-card-hover: #334155;    /* Slate 700 */
-  --border: #334155;           /* Slate 700 */
-  --border-hover: #475569;     /* Slate 600 */
-  --purple: #6366f1;           /* Indigo 500 */
-  --purple-light: #818cf8;     /* Indigo 400 */
+  --bg-primary: #09090b;       /* Zinc 950 */
+  --bg-secondary: #18181b;     /* Zinc 900 */
+  --bg-card: #18181b;          /* Zinc 900 */
+  --bg-card-hover: #27272a;    /* Zinc 800 */
+  --border: #27272a;           /* Zinc 800 */
+  --border-hover: #3f3f46;     /* Zinc 700 */
+  --purple: #10b981;           /* Emerald 500 */
+  --purple-light: #34d399;     /* Emerald 400 */
   --blue: #3b82f6;             /* Blue 500 */
   --cyan: #06b6d4;             /* Cyan 500 */
   --green: #10b981;            /* Emerald 500 */
@@ -17,7 +17,7 @@
   --orange: #f97316;           /* Orange 500 */
   --text-primary: #f8fafc;     /* Slate 50 */
   --text-secondary: #cbd5e1;   /* Slate 300 */
-  --text-muted: #64748b;       /* Slate 500 */
+  --text-muted: #71717a;       /* Zinc 500 */
   --sidebar-width: 240px;
   --topbar-height: 64px;
 }
@@ -37,8 +37,8 @@ body {
 /* ─── Scrollbar ──────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(99,102,241,0.25); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(99,102,241,0.5); }
+::-webkit-scrollbar-thumb { background: rgba(16,185,129,0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(16,185,129,0.4); }
 
 /* ─── App Shell ──────────────────────────────────── */
 .app-shell {
@@ -155,11 +155,11 @@ body {
   white-space: nowrap;
   border: 1px solid transparent;
 }
-.nav-item:hover { background: rgba(99,102,241,0.08); color: var(--text-primary); }
+.nav-item:hover { background: rgba(16,185,129,0.08); color: var(--text-primary); }
 .nav-item.active {
-  background: rgba(99,102,241,0.12);
+  background: rgba(16,185,129,0.12);
   color: var(--purple-light);
-  border-color: rgba(99,102,241,0.25);
+  border-color: rgba(16,185,129,0.25);
 }
 .nav-item.active svg { color: var(--purple-light); }
 
@@ -236,11 +236,11 @@ body {
   flex-shrink: 0;
 }
 .btn-primary {
-  background: linear-gradient(135deg,#4f46e5,#3b82f6);
+  background: linear-gradient(135deg,#10b981,#059669);
   color: white;
-  box-shadow: 0 4px 12px rgba(99,102,241,0.3);
+  box-shadow: 0 4px 12px rgba(16,185,129,0.25);
 }
-.btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(99,102,241,0.4); }
+.btn-primary:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(16,185,129,0.35); }
 .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-secondary {
   background: rgba(255,255,255,0.05);
@@ -274,7 +274,7 @@ body {
   transition: all 0.15s ease;
   flex-shrink: 0;
 }
-.btn-icon:hover { background: rgba(99,102,241,0.12); border-color: rgba(99,102,241,0.3); color: var(--purple-light); }
+.btn-icon:hover { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: var(--purple-light); }
 
 /* ─── Inputs ─────────────────────────────────────── */
 .input, .textarea, .select {
@@ -290,8 +290,8 @@ body {
   font-family: inherit;
 }
 .input:focus, .textarea:focus, .select:focus {
-  border-color: rgba(99,102,241,0.5);
-  box-shadow: 0 0 0 3px rgba(99,102,241,0.08);
+  border-color: rgba(16,185,129,0.5);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.08);
 }
 .input::placeholder, .textarea::placeholder { color: var(--text-muted); }
 .textarea { resize: vertical; min-height: 100px; }
@@ -375,16 +375,16 @@ body {
   font-size: 11px;
   font-weight: 600;
   color: var(--purple-light);
-  background: rgba(99,102,241,0.1);
-  border: 1px solid rgba(99,102,241,0.2);
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.2);
   padding: 3px 9px;
   border-radius: 999px;
 }
 
 /* ─── Info box ───────────────────────────────────── */
 .info-box {
-  background: rgba(99,102,241,0.07);
-  border: 1px solid rgba(99,102,241,0.18);
+  background: rgba(16,185,129,0.07);
+  border: 1px solid rgba(16,185,129,0.18);
   border-radius: 12px;
   padding: 14px 16px;
 }
@@ -427,8 +427,8 @@ body {
   white-space: nowrap;
 }
 .tab-btn.active {
-  background: rgba(139,92,246,0.2);
-  color: #c4b5fd;
+  background: rgba(16,185,129,0.2);
+  color: #a7f3d0;
 }
 
 /* ─── Divider ────────────────────────────────────── */

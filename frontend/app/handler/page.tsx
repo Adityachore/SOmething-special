@@ -8,7 +8,7 @@ import { getAllComplaints, startComplaint } from '@/lib/api';
 import { FileText, Clock, CheckCircle, AlertTriangle, AlertOctagon, Eye, Play, RefreshCw } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from '@/lib/charts';
 
-const COLORS = ['#8b5cf6','#3b82f6','#06b6d4','#10b981','#f59e0b','#f97316'];
+const COLORS = ['#10b981','#059669','#34d399','#3b82f6','#06b6d4','#f59e0b'];
 
 export default function HandlerDashboard() {
   const router = useRouter();
@@ -77,13 +77,13 @@ export default function HandlerDashboard() {
               <div style={{ position:'relative', width:70, height:70, flexShrink:0 }}>
                 <PieChart width={70} height={70}>
                   <Pie data={[{v:slaPct},{v:100-slaPct}]} cx={30} cy={30} innerRadius={22} outerRadius={32} startAngle={90} endAngle={-270} dataKey="v">
-                    <Cell fill="#8b5cf6"/><Cell fill="rgba(255,255,255,0.05)"/>
+                    <Cell fill="#10b981"/><Cell fill="rgba(255,255,255,0.05)"/>
                   </Pie>
                 </PieChart>
-                <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#a78bfa' }}>{slaPct}%</div>
+                <div style={{ position:'absolute', inset:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#34d399' }}>{slaPct}%</div>
               </div>
               <div>
-                {[{l:'On Track',c:'#8b5cf6',v:slaPct},{l:'At Risk',c:'#f59e0b',v:Math.max(0,100-slaPct-5)},{l:'Overdue',c:'#ef4444',v:Math.min(100-slaPct,100)}].map(s => (
+                {[{l:'On Track',c:'#10b981',v:slaPct},{l:'At Risk',c:'#f59e0b',v:Math.max(0,100-slaPct-5)},{l:'Overdue',c:'#ef4444',v:Math.min(100-slaPct,100)}].map(s => (
                   <div key={s.l} style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:8, marginBottom:5 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:5, fontSize:11, color:'#94a3b8' }}>
                       <div style={{ width:6, height:6, borderRadius:'50%', background:s.c }}/>{s.l}
@@ -132,7 +132,7 @@ export default function HandlerDashboard() {
                     <tr key={c.id}>
                       <td>
                         <div style={{ fontWeight:500, color:'#e2e8f0', maxWidth:220, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.title}</div>
-                        <div style={{ fontSize:11, color:'#8b5cf6', marginTop:1 }}>#{c.id.slice(0,8)}</div>
+                        <div style={{ fontSize:11, color:'var(--purple-light)', marginTop:1 }}>#{c.id.slice(0,8)}</div>
                       </td>
                       <td style={{ fontSize:13, color:'#94a3b8' }}>{c.primary_department||'—'}</td>
                       <td><PriorityBadge priority={c.priority_level}/></td>

@@ -96,7 +96,7 @@ export default function SubmitComplaint() {
   const getFileIcon = (fileName: string) => {
     const ext = fileName.substring(fileName.lastIndexOf('.')).toLowerCase();
     if (['.png', '.jpg', '.jpeg'].includes(ext)) return <Image size={18} className="text-blue-400" />;
-    return <FileText size={18} className="text-indigo-400" />;
+    return <FileText size={18} className="text-emerald-400" />;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -180,7 +180,7 @@ export default function SubmitComplaint() {
       ) : (
         <div className="glass animate-fade-in" style={{ padding: 28, maxWidth: 640, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#6366f1,#4f46e5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#10b981,#059669)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Brain size={18} color="white" />
             </div>
             <div>
@@ -234,13 +234,13 @@ export default function SubmitComplaint() {
             {/* Privacy and Anonymity */}
             <div className="info-box" style={{ marginBottom: 20, background: 'rgba(30, 41, 59, 0.5)', border: '1px solid var(--border)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-                <Shield size={18} style={{ color: '#818cf8', marginTop: 2, flexShrink: 0 }} />
+                <Shield size={18} style={{ color: '#34d399', marginTop: 2, flexShrink: 0 }} />
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#f1f5f9', marginBottom: 4 }}>Privacy Settings</div>
                   
                   {/* Anonymity */}
                   <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: 10, fontSize: 12.5, color: '#cbd5e1' }}>
-                    <input type="checkbox" checked={form.is_anonymous} onChange={e => setForm(f => ({ ...f, is_anonymous: e.target.checked }))} style={{ accentColor: '#6366f1' }} />
+                    <input type="checkbox" checked={form.is_anonymous} onChange={e => setForm(f => ({ ...f, is_anonymous: e.target.checked }))} style={{ accentColor: '#10b981' }} />
                     Submit Anonymous Complaint
                   </label>
                   <p style={{ fontSize: 11, color: '#64748b', marginBottom: 12 }}>

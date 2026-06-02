@@ -7,7 +7,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pi
 
 const STATUS_COLORS: Record<string,string> = { pending:'#f59e0b', in_progress:'#3b82f6', solved:'#10b981', rejected:'#ef4444', withdrawn:'#64748b', expired:'#94a3b8' };
 const PRIORITY_COLORS = ['#ef4444','#f59e0b','#3b82f6','#10b981'];
-const DEPT_COLORS = ['#8b5cf6','#3b82f6','#06b6d4','#10b981','#f59e0b','#f97316','#ef4444'];
+const DEPT_COLORS = ['#10b981','#059669','#34d399','#3b82f6','#06b6d4','#f59e0b','#ef4444'];
 
 export default function AdminAnalytics() {
   const [a, setA] = useState<any>(null);

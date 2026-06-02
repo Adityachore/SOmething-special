@@ -41,9 +41,9 @@ export default function AdminAuditLogs() {
                 {logs.map((l:any) => (
                   <tr key={l.id}>
                     <td style={{ fontSize:12, color:'#64748b', whiteSpace:'nowrap' }}><ClientDate date={l.created_at} /></td>
-                    <td><span className="badge" style={{ background:'rgba(139,92,246,0.1)', color:'#a78bfa', border:'1px solid rgba(139,92,246,0.2)' }}>{l.action_type}</span></td>
+                    <td><span className="badge" style={{ background:'rgba(16,185,129,0.1)', color:'#34d399', border:'1px solid rgba(16,185,129,0.2)' }}>{l.action_type}</span></td>
                     <td>
-                      <button onClick={() => router.push(`/admin/complaints/${l.complaint_id}`)} style={{ background:'none', border:'none', color:'#8b5cf6', cursor:'pointer', fontSize:12, textDecoration:'underline' }}>
+                      <button onClick={() => router.push(`/admin/complaints/${l.complaint_id}`)} style={{ background:'none', border:'none', color:'#10b981', cursor:'pointer', fontSize:12, textDecoration:'underline' }}>
                         #{l.complaint_id?.slice(0,8)}
                       </button>
                     </td>

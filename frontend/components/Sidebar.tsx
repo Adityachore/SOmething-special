@@ -37,9 +37,9 @@ const ROLE_MENUS: Record<string, { href: string; icon: React.ReactNode; label: s
 };
 
 const ROLE_LABEL: Record<string, { label: string; color: string }> = {
-  EMPLOYEE: { label: 'Employee', color: '#34d399' },
+  EMPLOYEE: { label: 'Employee', color: '#10b981' },
   CMD:      { label: 'Manager', color: '#60a5fa' },
-  HR:       { label: 'HR Manager', color: '#a78bfa' },
+  HR:       { label: 'HR Manager', color: '#34d399' },
   ADMIN:    { label: 'Administrator', color: '#f59e0b' },
 };
 
@@ -56,27 +56,27 @@ export default function Sidebar() {
       <div style={{ display:'flex', alignItems:'center', gap:10, padding:'4px 8px', marginBottom:24 }}>
         <div style={{
           width:34, height:34, borderRadius:10,
-          background:'linear-gradient(135deg,#8b5cf6,#3b82f6)',
+          background:'linear-gradient(135deg,#10b981,#059669)',
           display:'flex', alignItems:'center', justifyContent:'center',
-          boxShadow:'0 0 20px rgba(139,92,246,0.3)', flexShrink:0
+          boxShadow:'0 0 20px rgba(16,185,129,0.2)', flexShrink:0
         }}>
           <Shield size={17} color="white"/>
         </div>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:'#f1f5f9', lineHeight:1.2 }}>AI Complaint</div>
-          <div style={{ fontSize:10, fontWeight:600, color:'#8b5cf6', letterSpacing:'0.06em' }}>ANALYZER</div>
+          <div style={{ fontSize:10, fontWeight:600, color:'#10b981', letterSpacing:'0.06em' }}>ANALYZER</div>
         </div>
       </div>
 
       {/* User pill */}
       <div style={{
-        background:'rgba(139,92,246,0.07)', border:'1px solid rgba(139,92,246,0.18)',
+        background:'rgba(16,185,129,0.07)', border:'1px solid rgba(16,185,129,0.18)',
         borderRadius:12, padding:'10px 12px', marginBottom:20
       }}>
         <div style={{ display:'flex', alignItems:'center', gap:9 }}>
           <div style={{
             width:32, height:32, borderRadius:9, flexShrink:0,
-            background:'linear-gradient(135deg,#8b5cf6,#6366f1)',
+            background:'linear-gradient(135deg,#10b981,#059669)',
             display:'flex', alignItems:'center', justifyContent:'center',
             fontSize:13, fontWeight:700, color:'white'
           }}>

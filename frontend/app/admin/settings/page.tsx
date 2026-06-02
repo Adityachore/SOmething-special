@@ -69,7 +69,7 @@ export default function AdminSettings() {
         {SECTIONS.map(section => (
           <div key={section.title} className="glass" style={{ padding:24 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:18 }}>
-              <div style={{ width:32, height:32, borderRadius:8, background:'rgba(139,92,246,0.1)', display:'flex', alignItems:'center', justifyContent:'center', color:'#a78bfa' }}>
+              <div style={{ width:32, height:32, borderRadius:8, background:'rgba(16,185,129,0.1)', display:'flex', alignItems:'center', justifyContent:'center', color:'#34d399' }}>
                 {section.icon}
               </div>
               <h3 style={{ fontSize:15, fontWeight:600, color:'#f1f5f9' }}>{section.title}</h3>
