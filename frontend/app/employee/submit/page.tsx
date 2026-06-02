@@ -101,8 +101,24 @@ export default function SubmitComplaint() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (form.title.trim().length < 5) {
+      setError('Title must be at least 5 characters.');
+      return;
+    }
     if (form.description.trim().length < 20) {
       setError('Description must be at least 20 characters.');
+      return;
+    }
+    if (!form.employee_department) {
+      setError('Please select a department.');
+      return;
+    }
+    if (!form.employee_category) {
+      setError('Please select a category.');
+      return;
+    }
+    if (!form.employee_subcategory.trim()) {
+      setError('Please enter a sub-category.');
       return;
     }
 
@@ -190,10 +206,10 @@ export default function SubmitComplaint() {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Title */}
+             {/* Title */}
             <div style={{ marginBottom: 16 }}>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>Complaint Title *</label>
-              <input className="input" placeholder="Brief, descriptive title" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required />
+              <input className="input" placeholder="Brief, descriptive title (min 5 characters)" value={form.title} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} required minLength={5} />
             </div>
 
             {/* Description */}
@@ -201,7 +217,7 @@ export default function SubmitComplaint() {
               <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>
                 Description * <span style={{ color: '#475569', fontWeight: 400 }}>(min 20 characters)</span>
               </label>
-              <textarea className="input textarea" rows={5} placeholder="Describe your complaint in detail. Explain what happened, when, and who was involved..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} required />
+              <textarea className="input textarea" rows={5} placeholder="Describe your complaint in detail. Explain what happened, when, and who was involved..." value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} required minLength={20} />
               <div style={{ fontSize: 11, color: form.description.length >= 20 ? '#34d399' : '#64748b', marginTop: 4 }}>
                 {form.description.length}/20 characters
               </div>
@@ -210,16 +226,16 @@ export default function SubmitComplaint() {
             {/* Categorization Dropdowns */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>Department</label>
-                <select className="input select" value={form.employee_department} onChange={e => setForm(f => ({ ...f, employee_department: e.target.value }))}>
-                  <option value="">Select (AI Prediction fallback)</option>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>Department *</label>
+                <select className="input select" value={form.employee_department} onChange={e => setForm(f => ({ ...f, employee_department: e.target.value }))} required>
+                  <option value="">Select Department</option>
                   {DEPARTMENTS.map(dept => <option key={dept} value={dept}>{dept}</option>)}
                 </select>
               </div>
               <div>
-                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>Category</label>
-                <select className="input select" value={form.employee_category} onChange={e => setForm(f => ({ ...f, employee_category: e.target.value }))}>
-                  <option value="">Select (AI Prediction fallback)</option>
+                <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>Category *</label>
+                <select className="input select" value={form.employee_category} onChange={e => setForm(f => ({ ...f, employee_category: e.target.value }))} required>
+                  <option value="">Select Category</option>
                   {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                 </select>
               </div>
@@ -227,8 +243,8 @@ export default function SubmitComplaint() {
 
             {/* Subcategory */}
             <div style={{ marginBottom: 16 }}>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>Sub-category</label>
-              <input className="input" placeholder="e.g., Workplace Harassment, Payroll Delay, Printer issues (Optional)" value={form.employee_subcategory} onChange={e => setForm(f => ({ ...f, employee_subcategory: e.target.value }))} />
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#94a3b8', marginBottom: 6 }}>Sub-category *</label>
+              <input className="input" placeholder="e.g., Workplace Harassment, Payroll Delay, Printer issues" value={form.employee_subcategory} onChange={e => setForm(f => ({ ...f, employee_subcategory: e.target.value }))} required />
             </div>
 
             {/* Privacy and Anonymity */}
