@@ -141,7 +141,7 @@ export default function EmployeeComplaintDetail() {
             )}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <StatusBadge status={c.status}/>
-              <PriorityBadge priority={c.priority_level}/>
+              {c.assigned_to_user_id && <PriorityBadge priority={c.priority_level}/>}
               {c.primary_department && (
                 <span className="badge" style={{ background: 'rgba(59,130,246,0.1)', color: '#60a5fa', border: '1px solid rgba(59,130,246,0.2)' }}>
                   {c.primary_department}
@@ -171,11 +171,11 @@ export default function EmployeeComplaintDetail() {
             <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>AI Analysis</span>
           </div>
           {[
-            { label: 'Summary', value: c.ai_summary },
+            { label: 'Summary', value: c.ai_summary, forceShow: true },
             { label: 'Category Reason', value: c.ai_categorization_reason },
             { label: 'Priority Reason', value: c.ai_priority_reason },
             { label: 'Sub-category', value: c.sub_category },
-          ].map(item => item.value && (
+          ].map(item => item.value && (item.forceShow || c.assigned_to_user_id) && (
             <div key={item.label} style={{ marginBottom: 12 }}>
               <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3 }}>{item.label}</div>
               <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>{item.value}</div>
@@ -191,11 +191,11 @@ export default function EmployeeComplaintDetail() {
             <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>Timeline</span>
           </div>
           {[
-            { label: 'Created', date: c.created_at, color: '#10b981' },
-            { label: 'Updated', date: c.updated_at, color: '#3b82f6' },
-            { label: 'SLA Due', date: c.sla_due_at, color: c.sla_due_at && new Date(c.sla_due_at) < new Date() ? '#ef4444' : '#f59e0b' },
-            { label: 'Resolved', date: c.resolved_at, color: '#10b981' },
-          ].map(t => (
+            { label: 'Created', date: c.created_at, color: '#10b981', show: true },
+            { label: 'Updated', date: c.updated_at, color: '#3b82f6', show: true },
+            { label: 'SLA Due', date: c.sla_due_at, color: c.sla_due_at && new Date(c.sla_due_at) < new Date() ? '#ef4444' : '#f59e0b', show: !!c.assigned_to_user_id },
+            { label: 'Resolved', date: c.resolved_at, color: '#10b981', show: true },
+          ].filter(t => t.show).map(t => (
             <div key={t.label} style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: t.date ? t.color : '#1e293b', border: t.date ? 'none' : '1px solid #334155', flexShrink: 0 }}/>
               <div style={{ flex: 1 }}>

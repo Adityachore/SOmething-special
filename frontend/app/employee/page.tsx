@@ -86,7 +86,7 @@ export default function EmployeeDashboard() {
                         <div style={{ fontSize:11, color:'var(--purple-light)', marginTop:2 }}>#{c.id.slice(0,8)}</div>
                       </td>
                       <td><StatusBadge status={c.status}/></td>
-                      <td><PriorityBadge priority={c.priority_level}/></td>
+                      <td>{c.assigned_to_user_id ? <PriorityBadge priority={c.priority_level}/> : <span style={{ color:'#475569' }}>—</span>}</td>
                       <td>
                         {c.ai_summary
                           ? <div style={{ fontSize:12, color:'#94a3b8', maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.ai_summary}</div>
