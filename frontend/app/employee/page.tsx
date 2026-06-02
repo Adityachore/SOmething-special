@@ -88,9 +88,15 @@ export default function EmployeeDashboard() {
                       <td><StatusBadge status={c.status}/></td>
                       <td>{c.assigned_to_user_id ? <PriorityBadge priority={c.priority_level}/> : <span style={{ color:'#475569' }}>—</span>}</td>
                       <td>
-                        {c.ai_summary
-                          ? <div style={{ fontSize:12, color:'#94a3b8', maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.ai_summary}</div>
-                          : <span style={{ fontSize:12, color:'#334155' }}>Processing...</span>}
+                        {c.assigned_to_user_id ? (
+                          c.ai_summary ? (
+                            <div style={{ fontSize:12, color:'#94a3b8', maxWidth:180, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{c.ai_summary}</div>
+                          ) : (
+                            <span style={{ fontSize:12, color:'#334155' }}>Processing...</span>
+                          )
+                        ) : (
+                          <span style={{ color:'#475569' }}>—</span>
+                        )}
                       </td>
                       <td style={{ color:'#64748b', fontSize:12, whiteSpace:'nowrap' }}><ClientDate date={c.created_at} showTime={false} /></td>
                     </tr>

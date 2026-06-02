@@ -163,26 +163,28 @@ export default function EmployeeComplaintDetail() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: c.assigned_to_user_id ? '1fr 1fr' : '1fr', gap: 20, marginBottom: 20 }}>
         {/* AI Analysis */}
-        <div className="glass" style={{ padding: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            <Brain size={16} style={{ color: '#34d399' }}/>
-            <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>AI Analysis</span>
-          </div>
-          {[
-            { label: 'Summary', value: c.ai_summary, forceShow: true },
-            { label: 'Category Reason', value: c.ai_categorization_reason },
-            { label: 'Priority Reason', value: c.ai_priority_reason },
-            { label: 'Sub-category', value: c.sub_category },
-          ].map(item => item.value && (item.forceShow || c.assigned_to_user_id) && (
-            <div key={item.label} style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3 }}>{item.label}</div>
-              <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>{item.value}</div>
+        {c.assigned_to_user_id && (
+          <div className="glass" style={{ padding: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+              <Brain size={16} style={{ color: '#34d399' }}/>
+              <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>AI Analysis</span>
             </div>
-          ))}
-          {!c.ai_summary && <div style={{ fontSize: 13, color: '#64748b' }}>AI analysis pending...</div>}
-        </div>
+            {[
+              { label: 'Summary', value: c.ai_summary },
+              { label: 'Category Reason', value: c.ai_categorization_reason },
+              { label: 'Priority Reason', value: c.ai_priority_reason },
+              { label: 'Sub-category', value: c.sub_category },
+            ].map(item => item.value && (
+              <div key={item.label} style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3 }}>{item.label}</div>
+                <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>{item.value}</div>
+              </div>
+            ))}
+            {!c.ai_summary && <div style={{ fontSize: 13, color: '#64748b' }}>AI analysis pending...</div>}
+          </div>
+        )}
 
         {/* Timeline */}
         <div className="glass" style={{ padding: 20 }}>
