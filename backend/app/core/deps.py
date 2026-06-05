@@ -2,6 +2,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from jose import JWTError
 
 from app.db.base import get_db
@@ -26,8 +27,15 @@ async def get_current_user(
     except JWTError:
         raise UnauthorizedError("Token is invalid or expired.")
 
-    result = await db.execute(select(User).where(User.id == user_id, User.deleted_at.is_(None)))
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.department_rel))
+        .where(User.id == user_id, User.deleted_at.is_(None))
+    )
     user = result.scalar_one_or_none()
     if not user:
         raise UnauthorizedError("User not found or deactivated.")
+    if user.status != "Active":
+        raise UnauthorizedError("Account disabled. Contact HR.")
     return user
+

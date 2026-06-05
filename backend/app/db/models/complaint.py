@@ -12,7 +12,9 @@ from app.db.base import Base
 class ComplaintStatus(str, PyEnum):
     PENDING = "PENDING"
     IN_PROGRESS = "IN_PROGRESS"
+    WAITING_FOR_EMPLOYEE = "WAITING_FOR_EMPLOYEE"
     SOLVED = "SOLVED"
+    CLOSED = "CLOSED"
     REJECTED = "REJECTED"
     WITHDRAWN = "WITHDRAWN"
     EXPIRED = "EXPIRED"
@@ -38,6 +40,8 @@ class Complaint(Base):
     tenant_id: Mapped[str] = mapped_column(String, ForeignKey("tenants.id"), nullable=False, index=True)
     employee_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), nullable=False, index=True)
     assigned_to_user_id: Mapped[str | None] = mapped_column(String, ForeignKey("users.id"), nullable=True)
+    employee_department_id: Mapped[str | None] = mapped_column(String, ForeignKey("departments.id"), nullable=True)
+    primary_department_id: Mapped[str | None] = mapped_column(String, ForeignKey("departments.id"), nullable=True)
 
     title: Mapped[str] = mapped_column(String(500), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
@@ -79,6 +83,13 @@ class Complaint(Base):
 
     # Clustering
     cluster_id: Mapped[str | None] = mapped_column(String, ForeignKey("clusters.id"), nullable=True)
+    is_repeated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="false")
+    repeat_count_at_assignment: Mapped[int] = mapped_column(Integer, default=0, nullable=False, server_default="0")
+    similarity_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    is_valuable: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, server_default="true")
+    ai_value_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    is_within_sla: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
+    first_resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Timestamps
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -93,6 +104,8 @@ class Complaint(Base):
     tenant: Mapped["Tenant"] = relationship("Tenant", back_populates="complaints")
     employee: Mapped["User"] = relationship("User", back_populates="complaints", foreign_keys=[employee_id])
     assigned_to: Mapped["User | None"] = relationship("User", foreign_keys=[assigned_to_user_id])
+    employee_department_rel: Mapped["Department | None"] = relationship("Department", foreign_keys=[employee_department_id])
+    primary_department_rel: Mapped["Department | None"] = relationship("Department", foreign_keys=[primary_department_id])
     cluster: Mapped["Cluster | None"] = relationship("Cluster", back_populates="complaints")
     embedding: Mapped["ComplaintEmbedding | None"] = relationship("ComplaintEmbedding", back_populates="complaint", uselist=False)
     resolution_detail: Mapped["ResolutionDetail | None"] = relationship("ResolutionDetail", back_populates="complaint", uselist=False)

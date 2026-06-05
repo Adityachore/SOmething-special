@@ -7,7 +7,7 @@ import ClientDate from '@/components/ClientDate';
 import {
   getComplaint, startComplaint, assignComplaint, resolveComplaint, rejectComplaint,
   reopenComplaint, getNotes, addNote, getComplaintAuditLogs, uploadAttachment, getUsers,
-  overrideComplaint, deleteAttachment
+  overrideComplaint, deleteAttachment, closeComplaint, waitForEmployee
 } from '@/lib/api';
 import api from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
@@ -26,7 +26,7 @@ export default function HandlerComplaintDetail() {
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   const [users, setUsers] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'notes'|'audit'>('notes');
-  const [modal, setModal] = useState<''|'assign'|'resolve'|'reject'|'override'>('');
+  const [modal, setModal] = useState<''|'assign'|'resolve'|'reject'|'override'|'wait'>('');
   const [msg, setMsg] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -37,6 +37,7 @@ export default function HandlerComplaintDetail() {
   const [rejectForm, setRejectForm] = useState({ reason:'', category:'' });
   const [noteForm, setNoteForm] = useState({ content:'', is_visible_to_employee:false });
   const [overrideForm, setOverrideForm] = useState({ primary_department: '', sub_category: '', priority_level: '', is_hr_sensitive: false });
+  const [waitForm, setWaitForm] = useState({ note: '' });
 
   // Attachment download
   const handleDownloadAttachment = async (attachmentId: string, filename: string) => {
@@ -85,10 +86,18 @@ export default function HandlerComplaintDetail() {
       getComplaint(id),
       getNotes(id).catch(() => ({ data: [] })),
       getComplaintAuditLogs(id).catch(() => ({ data: [] })),
-      getUsers().catch(() => ({ data: [] })),
-    ]).then(([cr, nr, ar, ur]) => {
-      setC(cr.data); setNotes(nr.data); setAuditLogs(ar.data); setUsers(ur.data);
+    ]).then(([cr, nr, ar]) => {
+      setC(cr.data); setNotes(nr.data); setAuditLogs(ar.data);
     }).catch(() => {}).finally(() => setLoading(false));
+  };
+
+  const openAssignModal = () => {
+    setModal('assign');
+    if (users.length === 0) {
+      getUsers()
+        .then(res => setUsers(res.data || []))
+        .catch(() => setMsg('Failed to load users for assignment.'));
+    }
   };
   useEffect(load, [id]);
 
@@ -136,7 +145,10 @@ export default function HandlerComplaintDetail() {
 
   const isPending = c.status === 'PENDING';
   const isInProgress = c.status === 'IN_PROGRESS';
-  const isClosed = ['SOLVED','REJECTED','WITHDRAWN','EXPIRED'].includes(c.status);
+  const isWaiting = c.status === 'WAITING_FOR_EMPLOYEE';
+  const isSolved = c.status === 'SOLVED';
+  const canReopen = ['REJECTED', 'WITHDRAWN', 'EXPIRED'].includes(c.status) || isSolved;
+  const canClose = isSolved;
 
   return (
     <DashboardLayout title="Complaint Detail">
@@ -158,11 +170,14 @@ export default function HandlerComplaintDetail() {
           </div>
           <div style={{ display:'flex', gap:8, flexShrink:0, flexWrap:'wrap' }}>
             {isPending && <button className="btn btn-primary" onClick={() => doAction(() => startComplaint(id), 'Work started!')}><Play size={14}/> Start</button>}
-            {isPending && <button className="btn btn-secondary" onClick={() => setModal('assign')}><UserPlus size={14}/> Assign</button>}
-            {(isPending || isInProgress) && <button className="btn btn-success" onClick={() => setModal('resolve')}><CheckCircle size={14}/> Resolve</button>}
-            {(isPending || isInProgress) && <button className="btn btn-danger" onClick={() => setModal('reject')}><XCircle size={14}/> Reject</button>}
-            {isClosed && <button className="btn btn-secondary" onClick={() => doAction(() => reopenComplaint(id), 'Reopened!')}><RotateCcw size={14}/> Reopen</button>}
-            {isInProgress && <button className="btn btn-secondary" onClick={() => setModal('assign')}><UserPlus size={14}/> Reassign</button>}
+            {isPending && <button className="btn btn-secondary" onClick={openAssignModal}><UserPlus size={14}/> Assign</button>}
+            {isInProgress && <button className="btn btn-secondary" onClick={() => setModal('wait')}><Clock size={14}/> Wait for Employee</button>}
+            {(isPending || isInProgress || isWaiting) && <button className="btn btn-success" onClick={() => setModal('resolve')}><CheckCircle size={14}/> Resolve</button>}
+            {(isPending || isInProgress || isWaiting) && <button className="btn btn-danger" onClick={() => setModal('reject')}><XCircle size={14}/> Reject</button>}
+            {isWaiting && <button className="btn btn-primary" onClick={() => doAction(() => startComplaint(id), 'Work resumed!')}><Play size={14}/> Resume</button>}
+            {canClose && <button className="btn btn-success" onClick={() => doAction(() => closeComplaint(id), 'Complaint closed!')}><CheckCircle size={14}/> Close</button>}
+            {canReopen && <button className="btn btn-secondary" onClick={() => doAction(() => reopenComplaint(id), 'Reopened!')}><RotateCcw size={14}/> Reopen</button>}
+            {(isInProgress || isPending) && <button className="btn btn-secondary" onClick={openAssignModal}><UserPlus size={14}/> {c.assigned_to_user_id ? 'Reassign' : 'Assign'}</button>}
           </div>
         </div>
       </div>
@@ -174,7 +189,7 @@ export default function HandlerComplaintDetail() {
             <div style={{ display:'flex', alignItems:'center', gap:8 }}><Brain size={16} style={{ color:'#34d399' }}/><span style={{ fontSize:14, fontWeight:600, color:'#f1f5f9' }}>AI Analysis</span></div>
             <button className="btn btn-secondary" style={{ fontSize:11, padding:'4px 8px' }} onClick={() => setModal('override')}>Override</button>
           </div>
-          {[{l:'Summary',v:c.ai_summary},{l:'Category Reason',v:c.ai_categorization_reason},{l:'Priority Reason',v:c.ai_priority_reason},{l:'Sub-category',v:c.sub_category},{l:'Department',v:c.primary_department}].map(i => i.v && (
+          {[{l:'Summary',v:c.ai_summary},{l:'Category Reason',v:c.ai_categorization_reason},{l:'Priority Reason',v:c.ai_priority_reason},{l:'Value Reason',v:c.ai_value_reason},{l:'Sub-category',v:c.sub_category},{l:'Department',v:c.primary_department}].map(i => i.v && (
             <div key={i.l} style={{ marginBottom:10 }}>
               <div style={{ fontSize:11, color:'#475569', textTransform:'uppercase', letterSpacing:'0.05em', marginBottom:2 }}>{i.l}</div>
               <div style={{ fontSize:13, color:'#94a3b8', lineHeight:1.5 }}>{i.v}</div>
@@ -189,6 +204,10 @@ export default function HandlerComplaintDetail() {
             {l:'Escalation',v:`Level ${c.escalation_level}`},{l:'Priority Score',v:c.priority_score?.toFixed(2)},
             {l:'Created',v:<ClientDate date={c.created_at} />},{l:'SLA Due',v:c.sla_due_at ? <ClientDate date={c.sla_due_at} /> : '—'},
             {l:'Resolved',v:c.resolved_at ? <ClientDate date={c.resolved_at} /> : '—'},
+            {l:'Value Assessment',v:c.is_valuable ? 'Valuable' : 'Low Value / Spurious'},
+            {l:'Repeat Issue',v:c.is_repeated ? `Repeated (Cluster: ${c.cluster_id?.slice(0,8)})` : 'Unique'},
+            {l:'Similarity Score',v:c.similarity_score != null ? `${(c.similarity_score * 100).toFixed(1)}%` : '—'},
+            {l:'SLA Compliance',v:c.is_within_sla === true ? 'SLA Met ✓' : (c.is_within_sla === false ? 'SLA Breached ✗' : 'Pending Resolution')},
           ].map(i => (
             <div key={i.l} style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
               <span style={{ fontSize:12, color:'#475569' }}>{i.l}</span>
@@ -413,6 +432,27 @@ export default function HandlerComplaintDetail() {
               <button className="btn btn-primary" style={{ flex:1 }} disabled={actionLoading}
                 onClick={() => doAction(() => overrideComplaint(id, overrideForm), 'Classifications updated!')}>
                 {actionLoading ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {modal === 'wait' && (
+        <div className="modal-overlay" onClick={e => { if(e.target===e.currentTarget) setModal(''); }}>
+          <div className="modal-box animate-fade-in">
+            <div className="section-header" style={{ marginBottom:20 }}>
+              <h3 style={{ fontSize:16, fontWeight:600, color:'#f1f5f9' }}>Request Information / Wait for Employee</h3>
+              <button className="btn-icon" onClick={() => setModal('')}><X size={16}/></button>
+            </div>
+            <div style={{ marginBottom:16 }}>
+              <label style={{ display:'block', fontSize:13, color:'#94a3b8', marginBottom:6 }}>Message to Employee (optional)</label>
+              <textarea className="input textarea" rows={3} value={waitForm.note} onChange={e => setWaitForm(f=>({...f,note:e.target.value}))} placeholder="E.g., Please provide the date of the incident or upload the relevant document."/>
+            </div>
+            <div style={{ display:'flex', gap:10 }}>
+              <button className="btn btn-secondary" style={{ flex:1 }} onClick={() => setModal('')}>Cancel</button>
+              <button className="btn btn-primary" style={{ flex:1 }} disabled={actionLoading}
+                onClick={() => doAction(() => waitForEmployee(id, waitForm.note), 'Status changed to Waiting for Employee.')}>
+                {actionLoading ? 'Updating...' : 'Wait for Employee'}
               </button>
             </div>
           </div>

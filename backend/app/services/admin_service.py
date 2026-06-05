@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, case
+from sqlalchemy import select, func, case, extract, text
 from app.db.models.complaint import Complaint, ComplaintStatus
+from app.db.models.user import User
 
 
 class AdminService:
@@ -73,6 +74,19 @@ class AdminService:
         )
         repeat_count = repeat_result.scalar_one()
 
+        # Active users count
+        active_users_result = await db.execute(
+            select(func.count(User.id)).where(
+                User.tenant_id == tenant_id,
+                User.status == "Active",
+                User.deleted_at.is_(None),
+            )
+        )
+        active_users_count = active_users_result.scalar_one()
+
+        # Weekly trend — last 8 weeks
+        weekly_trend = await AdminService.get_weekly_trend(db, tenant_id)
+
         return {
             "total_complaints": total,
             "pending": status_counts.get("PENDING", 0),
@@ -86,4 +100,35 @@ class AdminService:
             "repeat_complaint_count": repeat_count,
             "department_breakdown": department_breakdown,
             "priority_breakdown": priority_breakdown,
+            "active_users_count": active_users_count,
+            "weekly_trend": weekly_trend,
         }
+
+    @staticmethod
+    async def get_weekly_trend(db: AsyncSession, tenant_id: str) -> list[dict]:
+        """Returns complaint counts grouped by ISO week for the last 8 weeks."""
+        result = await db.execute(
+            select(
+                func.to_char(Complaint.created_at, "IYYY-IW").label("week"),
+                func.count(Complaint.id).label("total"),
+                func.sum(
+                    case((Complaint.status == ComplaintStatus.SOLVED, 1), else_=0)
+                ).label("resolved"),
+                func.sum(
+                    case((Complaint.status == ComplaintStatus.PENDING, 1), else_=0)
+                ).label("pending"),
+            )
+            .where(
+                Complaint.tenant_id == tenant_id,
+                Complaint.deleted_at.is_(None),
+                Complaint.created_at >= func.now() - text("interval '8 weeks'"),
+            )
+            .group_by(text("week"))
+            .order_by(text("week"))
+        )
+        rows = result.all()
+        return [
+            {"date": row.week, "total": row.total, "resolved": row.resolved, "pending": row.pending}
+            for row in rows
+        ]
+

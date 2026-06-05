@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
+import TableSkeleton from '@/components/TableSkeleton';
 import StatCard from '@/components/StatCard';
 import { PriorityBadge, StatusBadge, HRBadge } from '@/components/Badges';
 import { getAllComplaints, startComplaint } from '@/lib/api';
@@ -16,12 +17,13 @@ export default function HandlerDashboard() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
+  const [error, setError] = useState('');
 
   const load = () => {
-    setLoading(true);
+    setLoading(true); setError('');
     getAllComplaints({ status: filterStatus || undefined, priority: filterPriority || undefined, page_size: 50 })
       .then(r => setComplaints(r.data.items || []))
-      .catch(() => {})
+      .catch(() => setError('Failed to load complaints. Please check your connection.'))
       .finally(() => setLoading(false));
   };
   useEffect(load, [filterStatus, filterPriority]);
@@ -45,6 +47,7 @@ export default function HandlerDashboard() {
 
   return (
     <DashboardLayout title="Handler Dashboard">
+      {error && <div className="error-box" style={{ marginBottom:16 }}>{error}</div>}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:14, marginBottom:24 }}>
         <StatCard label="Total" value={stats.total} icon={<FileText size={18}/>} color="purple"/>
         <StatCard label="Pending" value={stats.pending} icon={<Clock size={18}/>} color="amber"/>
@@ -120,7 +123,7 @@ export default function HandlerDashboard() {
             <button className="btn-icon" onClick={load}><RefreshCw size={14}/></button>
           </div>
         </div>
-        {loading ? <div className="empty-state"><div className="spinner"/></div> : (
+        {loading ? <TableSkeleton cols={7} rows={6} /> : (
           <div style={{ overflowX:'auto' }}>
             <table className="data-table">
               <thead><tr><th>ID / Title</th><th>Dept</th><th>Priority</th><th>Status</th><th>HR</th><th>SLA</th><th>Actions</th></tr></thead>

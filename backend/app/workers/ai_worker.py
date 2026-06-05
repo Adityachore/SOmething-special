@@ -4,12 +4,13 @@ Runs with exponential backoff retry and rule-based fallback on failure.
 """
 import asyncio
 from celery import Task
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.workers.celery_app import celery_app
 from app.db.base import AsyncSessionLocal
 from app.db.models.complaint import Complaint, PriorityLevel, PrioritySource
+from app.db.models.department import Department, DepartmentType
 from app.db.models.complaint_embedding import ComplaintEmbedding
 from app.db.models.processing_queue import ProcessingQueue, QueueStatus, TaskType
 from app.db.models.tag import Tag, ComplaintTag
@@ -80,6 +81,32 @@ async def _process_ai_pipeline_async(task: Task, complaint_id: str, tenant_id: s
             complaint.sub_category = cat.sub_category
             complaint.is_hr_sensitive = cat.is_hr_sensitive
             complaint.ai_categorization_reason = cat.reason
+            complaint.is_valuable = cat.is_valuable
+            complaint.ai_value_reason = cat.value_reason
+
+            # Resolve primary_department_id based on predicted department name
+            try:
+                dept_stmt = select(Department).where(
+                    Department.tenant_id == tenant_id,
+                    func.lower(Department.name) == func.lower(cat.department)
+                )
+                dept_res = await db.execute(dept_stmt)
+                dept = dept_res.scalar_one_or_none()
+                if dept:
+                    complaint.primary_department_id = dept.id
+                else:
+                    # Fallback: find standard HR department if sensitive, otherwise standard CMD department
+                    fallback_type = DepartmentType.HR if cat.is_hr_sensitive else DepartmentType.CMD
+                    fallback_stmt = select(Department).where(
+                        Department.tenant_id == tenant_id,
+                        Department.type == fallback_type
+                    )
+                    fallback_res = await db.execute(fallback_stmt)
+                    fallback_dept = fallback_res.scalars().first()
+                    if fallback_dept:
+                        complaint.primary_department_id = fallback_dept.id
+            except Exception as e:
+                print(f"Failed to resolve primary_department_id: {e}")
 
             # 2. Priority
             try:
@@ -106,7 +133,7 @@ async def _process_ai_pipeline_async(task: Task, complaint_id: str, tenant_id: s
             sla_hours = sla_map.get(complaint.priority_level, settings.SLA_HOURS_DEFAULT)
             complaint.sla_due_at = complaint.created_at + timedelta(hours=sla_hours)
 
-            # 3. Embeddings (for similarity)
+            # 3. Embeddings (for similarity & clustering)
             try:
                 text = f"{complaint.title} {complaint.description}"
                 embedding = await gemini_provider.get_embedding(text)
@@ -118,8 +145,75 @@ async def _process_ai_pipeline_async(task: Task, complaint_id: str, tenant_id: s
                     emb_obj.embedding = embedding
                 else:
                     db.add(ComplaintEmbedding(complaint_id=complaint_id, embedding=embedding))
-            except Exception:
-                pass  # Embedding failure is non-blocking
+                
+                await db.flush()
+
+                # Perform pgvector cosine similarity search
+                stmt = (
+                    select(
+                        ComplaintEmbedding.complaint_id,
+                        ComplaintEmbedding.embedding.cosine_distance(embedding).label("distance")
+                    )
+                    .join(Complaint, Complaint.id == ComplaintEmbedding.complaint_id)
+                    .where(
+                        Complaint.tenant_id == tenant_id,
+                        Complaint.id != complaint_id,
+                        Complaint.deleted_at.is_(None)
+                    )
+                    .order_by("distance")
+                    .limit(5)
+                )
+                res = await db.execute(stmt)
+                matches = res.all()
+
+                if matches:
+                    best_match_id = matches[0].complaint_id
+                    similarity_score = float(1 - matches[0].distance)
+                    complaint.similarity_score = similarity_score
+
+                    # 3-tier threshold check:
+                    if similarity_score >= 0.75:
+                        match_stmt = select(Complaint).where(Complaint.id == best_match_id)
+                        match_res = await db.execute(match_stmt)
+                        best_match_complaint = match_res.scalar_one_or_none()
+
+                        if best_match_complaint:
+                            cluster_id = best_match_complaint.cluster_id
+                            if not cluster_id:
+                                from app.db.models.cluster import Cluster
+                                new_cluster = Cluster(
+                                    tenant_id=tenant_id,
+                                    label=f"Cluster: {best_match_complaint.title}"[:500]
+                                )
+                                db.add(new_cluster)
+                                await db.flush()
+                                cluster_id = new_cluster.id
+
+                                best_match_complaint.cluster_id = cluster_id
+                                best_match_complaint.is_repeated = True
+                                best_match_complaint.repeat_count_at_assignment = 2
+
+                            complaint.cluster_id = cluster_id
+                            complaint.is_repeated = True
+
+                            # Recount cluster size
+                            size_stmt = select(func.count(Complaint.id)).where(Complaint.cluster_id == cluster_id)
+                            size_res = await db.execute(size_stmt)
+                            cluster_size = size_res.scalar_one()
+
+                            # Count includes uncommitted new complaint
+                            complaint.repeat_count_at_assignment = cluster_size + 1
+                    else:
+                        complaint.cluster_id = None
+                        complaint.is_repeated = False
+                        complaint.repeat_count_at_assignment = 0
+                else:
+                    complaint.cluster_id = None
+                    complaint.is_repeated = False
+                    complaint.repeat_count_at_assignment = 0
+                    complaint.similarity_score = None
+            except Exception as exc:
+                print(f"Embedding/Similarity pipeline failed: {exc}")
 
             # 4. Summary & Tags
             try:

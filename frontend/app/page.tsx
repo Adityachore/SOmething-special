@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 
 const ROLE_HOME: Record<string, string> = {
   ADMIN: '/admin',
+  ORG_ADMIN: '/admin',
   CMD: '/handler',
   HR: '/handler',
   EMPLOYEE: '/employee',

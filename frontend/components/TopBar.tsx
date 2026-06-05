@@ -47,12 +47,17 @@ export default function TopBar({ title }: { title?: string }) {
         }} className="animate-pulse-dot"/>
       </button>
       {/* Avatar */}
-      <div style={{
-        width:34, height:34, borderRadius:9, flexShrink:0,
-        background:'linear-gradient(135deg,var(--purple),var(--purple-light))',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        fontSize:13, fontWeight:700, color:'white'
-      }}>
+      <div 
+        onClick={() => router.push('/employee/profile')}
+        style={{
+          width:34, height:34, borderRadius:9, flexShrink:0,
+          background:'linear-gradient(135deg,var(--purple),var(--purple-light))',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          fontSize:13, fontWeight:700, color:'#070709',
+          cursor: 'pointer'
+        }}
+        title="View Profile"
+      >
         {(user?.email?.[0] || 'U').toUpperCase()}
       </div>
     </header>

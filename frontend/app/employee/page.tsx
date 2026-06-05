@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
+import TableSkeleton from '@/components/TableSkeleton';
 import StatCard from '@/components/StatCard';
 import { PriorityBadge, StatusBadge } from '@/components/Badges';
 import ClientDate from '@/components/ClientDate';
@@ -13,15 +14,15 @@ export default function EmployeeDashboard() {
   const [complaints, setComplaints] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '' });
+  const [form, setForm] = useState({ title: '', description: '', is_anonymous: false });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const load = () => {
-    setLoading(true);
+    setLoading(true); setError('');
     getMyComplaints({ page_size: 50 })
       .then(r => setComplaints(r.data.items || []))
-      .catch(() => {})
+      .catch(() => setError('Failed to load your complaints. Please check your connection.'))
       .finally(() => setLoading(false));
   };
   useEffect(load, []);
@@ -29,8 +30,8 @@ export default function EmployeeDashboard() {
   const stats = {
     total: complaints.length,
     pending: complaints.filter(c => c.status === 'PENDING').length,
-    in_progress: complaints.filter(c => c.status === 'IN_PROGRESS').length,
-    solved: complaints.filter(c => c.status === 'SOLVED').length,
+    in_progress: complaints.filter(c => c.status === 'IN_PROGRESS' || c.status === 'WAITING_FOR_EMPLOYEE').length,
+    solved: complaints.filter(c => c.status === 'SOLVED' || c.status === 'CLOSED').length,
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,10 +39,10 @@ export default function EmployeeDashboard() {
     if (form.description.trim().length < 20) { setError('Description must be at least 20 characters.'); return; }
     setSubmitting(true); setError('');
     try {
-      await createComplaint(form);
+      await createComplaint({ title: form.title, description: form.description, is_anonymous: form.is_anonymous });
       load();
       setShowModal(false);
-      setForm({ title: '', description: '' });
+      setForm({ title: '', description: '', is_anonymous: false });
     } catch (err: any) {
       setError(err.response?.data?.detail || err.response?.data?.message || 'Failed to submit.');
     } finally { setSubmitting(false); }
@@ -49,6 +50,7 @@ export default function EmployeeDashboard() {
 
   return (
     <DashboardLayout title="My Dashboard">
+      {error && <div className="error-box" style={{ marginBottom: 16 }}>{error}</div>}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
         <StatCard label="Total Complaints" value={stats.total} icon={<FileText size={20}/>} color="purple"/>
         <StatCard label="Pending" value={stats.pending} icon={<Clock size={20}/>} color="amber"/>
@@ -67,7 +69,7 @@ export default function EmployeeDashboard() {
             <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={15}/> New Complaint</button>
           </div>
           {loading ? (
-            <div className="empty-state"><div className="spinner"/></div>
+            <TableSkeleton cols={5} rows={5} />
           ) : complaints.length === 0 ? (
             <div className="empty-state">
               <FileText size={40}/>
@@ -168,6 +170,18 @@ export default function EmployeeDashboard() {
               <div style={{ marginBottom:18 }}>
                 <label style={{ display:'block', fontSize:13, fontWeight:500, color:'#94a3b8', marginBottom:6 }}>Description <span style={{ color:'#475569' }}>(min 20 chars)</span></label>
                 <textarea className="input textarea" rows={5} placeholder="Describe your complaint in detail..." value={form.description} onChange={e => setForm(f => ({...f, description:e.target.value}))} required/>
+              </div>
+              <div style={{ marginBottom:16 }}>
+                <label style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'#94a3b8', cursor:'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.is_anonymous}
+                    onChange={e => setForm(f => ({...f, is_anonymous: e.target.checked}))}
+                    style={{ width:15, height:15, accentColor:'#10b981' }}
+                  />
+                  <span>Submit anonymously</span>
+                  <span style={{ fontSize:11, color:'#475569' }}>(your name will be hidden from handlers)</span>
+                </label>
               </div>
               {error && <div className="error-box" style={{ marginBottom:14 }}>{error}</div>}
               <div style={{ display:'flex', gap:10 }}>

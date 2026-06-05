@@ -33,10 +33,8 @@ export default function AdminDashboard() {
     : [];
   const total = a.total_complaints || 0;
 
-  // Mock trend
-  const trend = ['W1','W2','W3','W4','W5'].map((w, i) => ({
-    date: w, total: 20+i*12, resolved: 12+i*10, pending: 8+i*2
-  }));
+  // Real weekly trend from DB (falls back to empty array while loading)
+  const trend: { date: string; total: number; resolved: number; pending: number }[] = a.weekly_trend || [];
 
   const health = [
     { name:'Database', icon:<Database size={14}/>, ok:true },
@@ -49,7 +47,7 @@ export default function AdminDashboard() {
     <DashboardLayout title="Admin Overview">
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
         <StatCard label="Total Users" value={users.length} icon={<Users size={18}/>} color="purple"/>
-        <StatCard label="Active Users" value={Math.max(1, Math.round(users.length*0.9))} icon={<Activity size={18}/>} color="blue"/>
+        <StatCard label="Active Users" value={a.active_users_count ?? users.length} icon={<Activity size={18}/>} color="blue"/>
         <StatCard label="Departments" value={deptPie.length || 0} icon={<Globe size={18}/>} color="green"/>
         <StatCard label="Total Complaints" value={total} icon={<FileText size={18}/>} color="amber"/>
       </div>
@@ -71,6 +69,9 @@ export default function AdminDashboard() {
               <Area type="monotone" dataKey="resolved" stroke="#34d399" strokeWidth={2} fill="url(#gr)"/>
             </AreaChart>
           </ResponsiveContainer>
+          {trend.length === 0 && (
+            <div style={{ textAlign:'center', color:'#475569', fontSize:13, paddingTop:10 }}>No complaint data yet.</div>
+          )}
         </div>
 
         <div className="glass" style={{ padding:20 }}>

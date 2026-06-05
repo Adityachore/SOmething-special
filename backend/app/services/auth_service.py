@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, func
 
 from app.db.models.user import User
 from app.db.models.auth_token import AuthToken
@@ -21,11 +21,14 @@ class AuthService:
     @staticmethod
     async def login(db: AsyncSession, email: str, password: str) -> TokenResponse:
         result = await db.execute(
-            select(User).where(User.email == email, User.deleted_at.is_(None))
+            select(User).where(func.lower(User.email) == func.lower(email), User.deleted_at.is_(None))
         )
         user = result.scalar_one_or_none()
         if not user or not verify_password(password, user.hashed_password):
             raise UnauthorizedError("Invalid email or password.")
+
+        if user.status != "Active":
+            raise UnauthorizedError("Account disabled. Contact HR.")
 
         access_token = create_access_token({
             "sub": user.id,
@@ -70,6 +73,9 @@ class AuthService:
         if not user:
             raise UnauthorizedError("User not found.")
 
+        if user.status != "Active":
+            raise UnauthorizedError("Account disabled. Contact HR.")
+
         access_token = create_access_token({
             "sub": user.id,
             "tenant_id": user.tenant_id,
@@ -87,3 +93,53 @@ class AuthService:
         if db_token:
             db_token.revoked_at = datetime.now(timezone.utc)
             await db.commit()
+
+    # In-memory store for reset tokens. Maps token (string) -> (email, expiry_datetime)
+    RESET_TOKENS: dict[str, tuple[str, datetime]] = {}
+
+    @staticmethod
+    async def forgot_password(db: AsyncSession, email: str) -> str | None:
+        import uuid
+        from datetime import timedelta
+        # Check if user exists
+        result = await db.execute(
+            select(User).where(func.lower(User.email) == func.lower(email), User.deleted_at.is_(None))
+        )
+        user = result.scalar_one_or_none()
+        if not user:
+            return None
+        
+        token = str(uuid.uuid4())
+        expiry = datetime.now(timezone.utc) + timedelta(hours=1)
+        AuthService.RESET_TOKENS[token] = (user.email.lower(), expiry)
+        
+        # Log to console so it's visible in backend logs
+        print(f"PASSWORD RESET TOKEN FOR {user.email}: {token}")
+        return token
+
+    @staticmethod
+    async def reset_password(db: AsyncSession, token: str, new_password: str) -> bool:
+        from app.core.security import hash_password
+        record = AuthService.RESET_TOKENS.get(token)
+        if not record:
+            return False
+        
+        email, expiry = record
+        if datetime.now(timezone.utc) > expiry:
+            del AuthService.RESET_TOKENS[token]
+            return False
+        
+        # Token is valid, find user and update password
+        result = await db.execute(
+            select(User).where(func.lower(User.email) == email, User.deleted_at.is_(None))
+        )
+        user = result.scalar_one_or_none()
+        if not user:
+            return False
+        
+        user.hashed_password = hash_password(new_password)
+        await db.commit()
+        
+        # Delete token after use
+        del AuthService.RESET_TOKENS[token]
+        return True

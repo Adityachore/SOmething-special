@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import get_db
 from app.core.deps import get_current_user
 from app.db.models.user import User, UserRole
-from app.db.models.complaint import ComplaintStatus, PriorityLevel
+from app.db.models.complaint import Complaint, ComplaintStatus, PriorityLevel
 from app.db.models.attachment import ComplaintAttachment
 from app.db.models.processing_queue import ProcessingQueue, TaskType, QueueStatus
 from app.services.complaint_service import ComplaintService
@@ -13,7 +13,8 @@ from app.services.search_service import SearchService
 from app.schemas.complaint_schemas import (
     ComplaintCreate, ComplaintUpdate, ComplaintResponse, ComplaintListResponse,
     AssignPayload, ResolvePayload, RejectPayload, RatePayload,
-    InternalNoteCreate, InternalNoteResponse, AttachmentResponse, MetaOverridePayload
+    InternalNoteCreate, InternalNoteResponse, AttachmentResponse, MetaOverridePayload,
+    WaitForEmployeePayload
 )
 from app.schemas.admin_schemas import AuditLogResponse
 from app.storage.local_storage import storage
@@ -44,6 +45,19 @@ async def create_complaint(
     if user.role != UserRole.EMPLOYEE:
         raise ForbiddenError("Only employees can submit complaints.")
     
+    # Rate Limit Check: max 5 complaints per hour per employee
+    from datetime import datetime, timedelta, timezone
+    from sqlalchemy import func
+    one_hour_ago = datetime.now(timezone.utc) - timedelta(hours=1)
+    count_stmt = select(func.count(Complaint.id)).where(
+        Complaint.employee_id == user.id,
+        Complaint.created_at >= one_hour_ago
+    )
+    count_res = await db.execute(count_stmt)
+    recent_count = count_res.scalar_one()
+    if recent_count >= 5:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded: Max 5 complaints per hour.")
+
     complaint = await ComplaintService.create(
         db, user,
         title=payload.title,
@@ -206,6 +220,29 @@ async def reject_complaint(
     user: User = Depends(get_current_user),
 ):
     return _resp(await ComplaintService.reject(db, user, complaint_id, payload.reason, payload.category), user)
+
+
+# ─── Handler: Close ──────────────────────────────────────────────────────────
+
+@router.post("/{complaint_id}/close", response_model=ComplaintResponse)
+async def close_complaint(
+    complaint_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return _resp(await ComplaintService.close(db, user, complaint_id), user)
+
+
+# ─── Handler: Wait for Employee ──────────────────────────────────────────────
+
+@router.post("/{complaint_id}/wait-for-employee", response_model=ComplaintResponse)
+async def wait_for_employee(
+    complaint_id: str,
+    payload: WaitForEmployeePayload,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return _resp(await ComplaintService.wait_for_employee(db, user, complaint_id, payload.note), user)
 
 
 # ─── Handler: Reopen ─────────────────────────────────────────────────────────

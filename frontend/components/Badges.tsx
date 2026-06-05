@@ -8,12 +8,14 @@ const PRIORITY_STYLES: Record<string, { label: string; cls: string }> = {
 };
 
 const STATUS_STYLES: Record<string, { label: string; cls: string }> = {
-  PENDING:     { label: 'Pending',     cls: 'badge status-pending' },
-  IN_PROGRESS: { label: 'In Progress', cls: 'badge status-in_progress' },
-  SOLVED:      { label: 'Resolved',    cls: 'badge status-solved' },
-  REJECTED:    { label: 'Rejected',    cls: 'badge status-rejected' },
-  WITHDRAWN:   { label: 'Withdrawn',   cls: 'badge status-withdrawn' },
-  EXPIRED:     { label: 'Expired',     cls: 'badge status-expired' },
+  PENDING:              { label: 'Pending',              cls: 'badge status-pending' },
+  IN_PROGRESS:          { label: 'In Progress',          cls: 'badge status-in_progress' },
+  WAITING_FOR_EMPLOYEE: { label: 'Waiting for Employee', cls: 'badge status-waiting' },
+  SOLVED:               { label: 'Resolved',             cls: 'badge status-solved' },
+  CLOSED:               { label: 'Closed',               cls: 'badge status-closed' },
+  REJECTED:             { label: 'Rejected',             cls: 'badge status-rejected' },
+  WITHDRAWN:            { label: 'Withdrawn',            cls: 'badge status-withdrawn' },
+  EXPIRED:              { label: 'Expired',              cls: 'badge status-expired' },
 };
 
 export function PriorityBadge({ priority }: { priority: string }) {

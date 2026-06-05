@@ -47,6 +47,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-change_this_secret_key_in_production}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL}
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - UPLOAD_DIR=/app/uploads
     depends_on:
@@ -69,6 +70,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-change_this_secret_key_in_production}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL}
       - ENVIRONMENT=${ENVIRONMENT:-development}
       - UPLOAD_DIR=/app/uploads
     depends_on:
@@ -91,6 +93,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-change_this_secret_key_in_production}
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL}
       - ENVIRONMENT=${ENVIRONMENT:-development}
     depends_on:
       postgres:

@@ -26,12 +26,17 @@ class SearchService:
         ]
 
         # Scope by role
-        if user.role == UserRole.CMD:
-            conditions.append(Complaint.primary_department == user.department)
-            conditions.append(Complaint.is_hr_sensitive == False)
+        if user.role in (UserRole.ADMIN, UserRole.ORG_ADMIN, UserRole.SUPER_ADMIN):
+            pass
         elif user.role == UserRole.HR:
-            conditions.append(Complaint.is_hr_sensitive == True)
-        # ADMIN sees all in tenant
+            # HR sees all complaints
+            pass
+        elif user.role == UserRole.CMD:
+            # CMD sees all non-HR sensitive complaints
+            conditions.append(Complaint.is_hr_sensitive == False)
+        elif user.role == UserRole.DEPT_HEAD:
+            # DEPT_HEAD only sees complaints routed to their department
+            conditions.append(Complaint.primary_department_id == user.department_id)
 
         if status:
             conditions.append(Complaint.status == status)

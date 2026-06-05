@@ -32,8 +32,15 @@ TRANSITIONS = {
         ComplaintStatus.REJECTED,
         ComplaintStatus.WITHDRAWN,
         ComplaintStatus.EXPIRED,
+        ComplaintStatus.WAITING_FOR_EMPLOYEE,
     ],
-    ComplaintStatus.SOLVED: [ComplaintStatus.IN_PROGRESS],
+    ComplaintStatus.WAITING_FOR_EMPLOYEE: [
+        ComplaintStatus.IN_PROGRESS,
+        ComplaintStatus.SOLVED,
+        ComplaintStatus.REJECTED,
+    ],
+    ComplaintStatus.SOLVED: [ComplaintStatus.IN_PROGRESS, ComplaintStatus.CLOSED],
+    ComplaintStatus.CLOSED: [],
     ComplaintStatus.REJECTED: [ComplaintStatus.IN_PROGRESS],
     ComplaintStatus.WITHDRAWN: [ComplaintStatus.IN_PROGRESS],
     ComplaintStatus.EXPIRED: [ComplaintStatus.IN_PROGRESS],
@@ -109,6 +116,13 @@ class ComplaintService:
         visibility_settings: str | None = None,
     ) -> Complaint:
         from datetime import timedelta
+        from app.db.models.tenant import Tenant
+        from app.core.sla import calculate_business_hours_sla
+        tenant_res = await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
+        tenant = tenant_res.scalar_one()
+        sla_hours = _get_sla_hours(PriorityLevel.MEDIUM)
+        sla_due = calculate_business_hours_sla(datetime.now(timezone.utc), sla_hours, tenant)
+
         complaint = Complaint(
             tenant_id=user.tenant_id,
             employee_id=user.id,
@@ -116,7 +130,7 @@ class ComplaintService:
             description=description,
             status=ComplaintStatus.PENDING,
             priority_level=PriorityLevel.MEDIUM,  # Default until AI processes
-            sla_due_at=datetime.now(timezone.utc) + timedelta(hours=settings.SLA_HOURS_DEFAULT),
+            sla_due_at=sla_due,
             employee_department=employee_department,
             employee_category=employee_category,
             employee_subcategory=employee_subcategory,
@@ -124,6 +138,8 @@ class ComplaintService:
             visibility_settings=visibility_settings,
             primary_department=employee_department,
             sub_category=employee_subcategory,
+            employee_department_id=user.department_id,
+            primary_department_id=user.department_id,
         )
         db.add(complaint)
         await db.flush()  # get complaint.id
@@ -175,17 +191,36 @@ class ComplaintService:
         page: int, page_size: int
     ) -> tuple[list[Complaint], int]:
         from app.db.models.user import UserRole
+        from app.db.models.tenant import Tenant
         conditions = [
             Complaint.tenant_id == user.tenant_id,
             Complaint.deleted_at.is_(None),
         ]
 
-        if user.role == UserRole.CMD:
-            conditions.append(Complaint.primary_department == user.department)
-            conditions.append(Complaint.is_hr_sensitive == False)
+        # Fetch tenant settings for privacy-aware filtering
+        tenant_res = await db.execute(select(Tenant).where(Tenant.id == user.tenant_id))
+        tenant = tenant_res.scalar_one_or_none()
+
+        if user.role in (UserRole.ADMIN, UserRole.ORG_ADMIN, UserRole.SUPER_ADMIN):
+            pass
         elif user.role == UserRole.HR:
-            conditions.append(Complaint.is_hr_sensitive == True)
-        # ADMIN sees everything in tenant
+            # HR sees all complaints
+            pass
+        elif user.role == UserRole.CMD:
+            # CMD sees all non-HR sensitive complaints, plus HR-sensitive if tenant allows
+            if tenant and (tenant.allow_cmd_view_hr_sensitive or tenant.allow_cmd_view_hr_sensitive_anonymized):
+                pass  # CMD can see everything (anonymization handled at serialization)
+            else:
+                conditions.append(Complaint.is_hr_sensitive == False)
+        elif user.role == UserRole.DEPT_HEAD:
+            # DEPT_HEAD only sees complaints routed to their department
+            if tenant and tenant.allow_dept_head_view_hr_sensitive:
+                conditions.append(Complaint.primary_department_id == user.department_id)
+            else:
+                conditions.append(and_(
+                    Complaint.primary_department_id == user.department_id,
+                    or_(Complaint.is_hr_sensitive == False, Complaint.is_hr_sensitive.is_(None))
+                ))
 
         if status:
             conditions.append(Complaint.status == status)
@@ -278,6 +313,7 @@ class ComplaintService:
             old_val={"assigned_to": old_assigned}, new_val={"assigned_to": assigned_to_user_id}
         )
         await db.commit()
+        await ComplaintService._notify(db, complaint, user, "assigned")
         return await ComplaintService._get_with_relations(db, complaint.id, user.tenant_id)
 
     # ── Start ─────────────────────────────────────────────────────────────────
@@ -295,6 +331,7 @@ class ComplaintService:
             old_val={"status": old_status.value}, new_val={"status": ComplaintStatus.IN_PROGRESS.value}
         )
         await db.commit()
+        await ComplaintService._notify(db, complaint, user, "started")
         return await ComplaintService._get_with_relations(db, complaint.id, user.tenant_id)
 
     # ── Resolve ───────────────────────────────────────────────────────────────
@@ -312,6 +349,13 @@ class ComplaintService:
         old_status = complaint.status
         complaint.status = ComplaintStatus.SOLVED
         complaint.resolved_at = now
+        if complaint.first_resolved_at is None:
+            complaint.first_resolved_at = now
+        
+        if complaint.sla_due_at:
+            complaint.is_within_sla = (complaint.first_resolved_at <= complaint.sla_due_at)
+        else:
+            complaint.is_within_sla = True
 
         resolution = ResolutionDetail(
             complaint_id=complaint.id,
@@ -327,6 +371,7 @@ class ComplaintService:
             old_val={"status": old_status.value}, new_val={"status": ComplaintStatus.SOLVED.value}
         )
         await db.commit()
+        await ComplaintService._notify(db, complaint, user, "resolved")
         return await ComplaintService._get_with_relations(db, complaint.id, user.tenant_id)
 
     # ── Reject ────────────────────────────────────────────────────────────────
@@ -341,6 +386,16 @@ class ComplaintService:
 
         old_status = complaint.status
         complaint.status = ComplaintStatus.REJECTED
+        
+        now = datetime.now(timezone.utc)
+        complaint.resolved_at = now
+        if complaint.first_resolved_at is None:
+            complaint.first_resolved_at = now
+            
+        if complaint.sla_due_at:
+            complaint.is_within_sla = (complaint.first_resolved_at <= complaint.sla_due_at)
+        else:
+            complaint.is_within_sla = True
 
         rejection = Rejection(
             complaint_id=complaint.id,
@@ -355,6 +410,7 @@ class ComplaintService:
             old_val={"status": old_status.value}, new_val={"status": ComplaintStatus.REJECTED.value}
         )
         await db.commit()
+        await ComplaintService._notify(db, complaint, user, "rejected")
         return await ComplaintService._get_with_relations(db, complaint.id, user.tenant_id)
 
     # ── Rate ──────────────────────────────────────────────────────────────────
@@ -397,15 +453,106 @@ class ComplaintService:
         old_status = complaint.status
         complaint.status = ComplaintStatus.IN_PROGRESS
         complaint.resolved_at = None
+        complaint.is_within_sla = None
 
         await ComplaintService._log_audit(
             db, complaint.id, user.id, AuditActionType.STATUS_CHANGE,
             old_val={"status": old_status.value}, new_val={"status": ComplaintStatus.IN_PROGRESS.value}
         )
         await db.commit()
+        await ComplaintService._notify(db, complaint, user, "reopened")
         return await ComplaintService._get_with_relations(db, complaint.id, user.tenant_id)
 
-    # ── Internal Notes ────────────────────────────────────────────────────────
+    # ── Close (Final state after SOLVED) ─────────────────────────────────────
+
+    @staticmethod
+    async def close(db: AsyncSession, user: User, complaint_id: str) -> Complaint:
+        complaint = await ComplaintService._get_with_relations(db, complaint_id, user.tenant_id)
+        assert_can_handle_complaint(user, complaint)
+        _assert_valid_transition(complaint.status, ComplaintStatus.CLOSED)
+
+        old_status = complaint.status
+        complaint.status = ComplaintStatus.CLOSED
+
+        await ComplaintService._log_audit(
+            db, complaint.id, user.id, AuditActionType.STATUS_CHANGE,
+            old_val={"status": old_status.value}, new_val={"status": ComplaintStatus.CLOSED.value}
+        )
+        await db.commit()
+        await ComplaintService._notify(db, complaint, user, "closed")
+        return await ComplaintService._get_with_relations(db, complaint.id, user.tenant_id)
+
+    # ── Wait for Employee ─────────────────────────────────────────────────────
+
+    @staticmethod
+    async def wait_for_employee(db: AsyncSession, user: User, complaint_id: str, note: str | None = None) -> Complaint:
+        complaint = await ComplaintService._get_with_relations(db, complaint_id, user.tenant_id)
+        assert_can_handle_complaint(user, complaint)
+        _assert_valid_transition(complaint.status, ComplaintStatus.WAITING_FOR_EMPLOYEE)
+
+        old_status = complaint.status
+        complaint.status = ComplaintStatus.WAITING_FOR_EMPLOYEE
+
+        await ComplaintService._log_audit(
+            db, complaint.id, user.id, AuditActionType.STATUS_CHANGE,
+            old_val={"status": old_status.value},
+            new_val={"status": ComplaintStatus.WAITING_FOR_EMPLOYEE.value, "note": note}
+        )
+        await db.commit()
+        await ComplaintService._notify(db, complaint, user, "waiting_for_employee", note)
+        return await ComplaintService._get_with_relations(db, complaint.id, user.tenant_id)
+
+    # ── Notification Helper ───────────────────────────────────────────────────
+
+    @staticmethod
+    async def _notify(
+        db: AsyncSession,
+        complaint: "Complaint",
+        actor: User,
+        event: str,
+        extra_info: str | None = None,
+    ):
+        """Create in-app notification for the complaint employee and/or assigned handler."""
+        from app.db.models.notification import Notification, NotificationType, NotificationChannel, NotificationStatus
+
+        event_map = {
+            "assigned": (NotificationType.COMPLAINT_ASSIGNED, "Your complaint has been assigned", True),
+            "started": (NotificationType.COMPLAINT_STARTED, "Work has started on your complaint", True),
+            "resolved": (NotificationType.COMPLAINT_RESOLVED, "Your complaint has been resolved", True),
+            "rejected": (NotificationType.COMPLAINT_REJECTED, "Your complaint has been rejected", True),
+            "closed": (NotificationType.COMPLAINT_RESOLVED, "Your complaint has been closed", True),
+            "waiting_for_employee": (NotificationType.COMPLAINT_STARTED, "Additional information required for your complaint", True),
+            "reopened": (NotificationType.COMPLAINT_STARTED, "Your complaint has been reopened", True),
+        }
+
+        if event not in event_map:
+            return
+
+        notif_type, title, notify_employee = event_map[event]
+
+        recipients = set()
+        if notify_employee and complaint.employee_id and complaint.employee_id != actor.id:
+            recipients.add(complaint.employee_id)
+        if complaint.assigned_to_user_id and complaint.assigned_to_user_id != actor.id:
+            recipients.add(complaint.assigned_to_user_id)
+
+        for uid in recipients:
+            notif = Notification(
+                tenant_id=complaint.tenant_id,
+                user_id=uid,
+                complaint_id=complaint.id,
+                type=notif_type,
+                channel=NotificationChannel.IN_APP,
+                title=f"{title}: {complaint.title[:60]}",
+                payload_json={"complaint_id": complaint.id, "extra": extra_info},
+                status=NotificationStatus.SENT,
+            )
+            db.add(notif)
+
+        if recipients:
+            await db.commit()
+
+
 
     @staticmethod
     async def add_internal_note(
@@ -413,9 +560,15 @@ class ComplaintService:
         content: str, is_visible_to_employee: bool
     ) -> InternalNote:
         complaint = await ComplaintService._get_with_relations(db, complaint_id, user.tenant_id)
-        from app.core.rbac import can_create_internal_note
-        if not can_create_internal_note(user, complaint):
-            raise ForbiddenError("You cannot add notes to this complaint.")
+        from app.db.models.user import UserRole
+        if user.role == UserRole.EMPLOYEE:
+            if complaint.employee_id != user.id:
+                raise ForbiddenError("You cannot add notes to this complaint.")
+            is_visible_to_employee = True
+        else:
+            from app.core.rbac import can_create_internal_note
+            if not can_create_internal_note(user, complaint):
+                raise ForbiddenError("You cannot add notes to this complaint.")
 
         note = InternalNote(
             complaint_id=complaint.id,
@@ -437,6 +590,20 @@ class ComplaintService:
         db: AsyncSession, user: User, complaint_id: str
     ) -> list[InternalNote]:
         complaint = await ComplaintService._get_with_relations(db, complaint_id, user.tenant_id)
+        from app.db.models.user import UserRole
+        if user.role == UserRole.EMPLOYEE:
+            if complaint.employee_id != user.id:
+                raise ForbiddenError("You cannot view notes for this complaint.")
+            result = await db.execute(
+                select(InternalNote)
+                .where(
+                    InternalNote.complaint_id == complaint_id,
+                    InternalNote.is_visible_to_employee == True
+                )
+                .order_by(InternalNote.created_at.asc())
+            )
+            return result.scalars().all()
+
         from app.core.rbac import can_see_internal_notes
         if not can_see_internal_notes(user, complaint):
             raise ForbiddenError("You cannot view notes for this complaint.")
@@ -517,7 +684,11 @@ class ComplaintService:
                 PriorityLevel.LOW: settings.SLA_HOURS_DEFAULT,
             }
             sla_hours = sla_map.get(priority_level, settings.SLA_HOURS_DEFAULT)
-            complaint.sla_due_at = complaint.created_at + timedelta(hours=sla_hours)
+            from app.db.models.tenant import Tenant
+            from app.core.sla import calculate_business_hours_sla
+            tenant_res = await db.execute(select(Tenant).where(Tenant.id == complaint.tenant_id))
+            tenant = tenant_res.scalar_one()
+            complaint.sla_due_at = calculate_business_hours_sla(complaint.created_at, sla_hours, tenant)
 
             await ComplaintService._log_audit(
                 db, complaint.id, user.id, AuditActionType.PRIORITY_OVERRIDE,

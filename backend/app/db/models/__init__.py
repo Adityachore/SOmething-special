@@ -13,6 +13,9 @@ from app.db.models.notification import Notification, NotificationPreference, Not
 from app.db.models.attachment import ComplaintAttachment
 from app.db.models.tag import Tag, ComplaintTag
 from app.db.models.auth_token import AuthToken
+from app.db.models.profile_update_request import ProfileUpdateRequest
+from app.db.models.department import Department, DepartmentType
+from app.db.models.invitation import Invitation
 
 __all__ = [
     "Tenant", "User", "UserRole",
@@ -23,5 +26,6 @@ __all__ = [
     "ProcessingQueue", "TaskType", "QueueStatus",
     "Notification", "NotificationPreference", "NotificationType", "NotificationChannel",
     "ComplaintAttachment", "Tag", "ComplaintTag",
-    "AuthToken",
+    "AuthToken", "ProfileUpdateRequest",
+    "Department", "DepartmentType", "Invitation",
 ]

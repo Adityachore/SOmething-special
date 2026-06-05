@@ -10,6 +10,8 @@ class CategorizationResult:
     is_hr_sensitive: bool
     reason: str
     confidence: float
+    is_valuable: bool = True
+    value_reason: str = ""
     source: str = "AI"  # "AI" or "RULE"
 
 

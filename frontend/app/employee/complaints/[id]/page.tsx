@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import { StatusBadge, PriorityBadge } from '@/components/Badges';
 import ClientDate from '@/components/ClientDate';
-import { getComplaint, withdrawComplaint, rateComplaint, updateComplaint, deleteAttachment } from '@/lib/api';
+import { getComplaint, withdrawComplaint, rateComplaint, updateComplaint, deleteAttachment, getNotes, addNote } from '@/lib/api';
 import api from '@/lib/api';
 import { ArrowLeft, Star, Clock, Brain, Edit3, X, Check, Paperclip, Trash2 } from 'lucide-react';
 
@@ -20,16 +20,22 @@ export default function EmployeeComplaintDetail() {
   const [editForm, setEditForm] = useState({ title: '', description: '' });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState('');
+  
+  // Discussion states
+  const [notes, setNotes] = useState<any[]>([]);
+  const [noteContent, setNoteContent] = useState('');
+  const [noteSubmitting, setNoteSubmitting] = useState(false);
 
   const load = () => {
     setLoading(true);
-    getComplaint(id)
-      .then(r => { 
-        setC(r.data); 
-        setEditForm({ title: r.data.title, description: r.data.description }); 
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      getComplaint(id),
+      getNotes(id).catch(() => ({ data: [] }))
+    ]).then(([cr, nr]) => {
+      setC(cr.data); 
+      setNotes(nr.data);
+      setEditForm({ title: cr.data.title, description: cr.data.description }); 
+    }).catch(() => {}).finally(() => setLoading(false));
   };
   useEffect(load, [id]);
 
@@ -41,6 +47,22 @@ export default function EmployeeComplaintDetail() {
       setMsg('Complaint withdrawn.'); 
     } catch { 
       setMsg('Failed to withdraw.'); 
+    }
+  };
+
+  const handleAddNote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!noteContent.trim()) return;
+    setNoteSubmitting(true);
+    try {
+      await addNote(id, { content: noteContent, is_visible_to_employee: true });
+      setNoteContent('');
+      const nr = await getNotes(id);
+      setNotes(nr.data);
+    } catch {
+      setMsg('Failed to post comment.');
+    } finally {
+      setNoteSubmitting(false);
     }
   };
 
@@ -283,6 +305,58 @@ export default function EmployeeComplaintDetail() {
           ))}
         </div>
       )}
+
+      {/* Discussion & Updates */}
+      <div className="glass" style={{ padding: 20, marginTop: 20 }}>
+        <h3 style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9', marginBottom: 14 }}>Discussion & Updates</h3>
+        
+        {/* Add comment form */}
+        <form onSubmit={handleAddNote} style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
+          <input 
+            className="input" 
+            placeholder="Type your reply/message here..." 
+            value={noteContent} 
+            onChange={e => setNoteContent(e.target.value)}
+            disabled={noteSubmitting}
+          />
+          <button type="submit" className="btn btn-primary" disabled={noteSubmitting || !noteContent.trim()}>
+            {noteSubmitting ? 'Posting...' : 'Send'}
+          </button>
+        </form>
+
+        {/* Notes list */}
+        {notes.length === 0 ? (
+          <div style={{ fontSize: 13, color: '#475569', textAlign: 'center', padding: 10 }}>No messages yet.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {notes.map((n: any) => {
+              const isSelf = n.author_user_id === c.employee_id;
+              return (
+                <div 
+                  key={n.id} 
+                  style={{ 
+                    padding: '12px 16px', 
+                    background: isSelf ? 'rgba(251,191,36,0.04)' : 'rgba(255,255,255,0.02)', 
+                    borderRadius: 12, 
+                    border: isSelf ? '1px solid rgba(251,191,36,0.1)' : '1px solid rgba(255,255,255,0.04)',
+                    alignSelf: isSelf ? 'flex-end' : 'flex-start',
+                    width: '100%',
+                    maxWidth: '85%'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: isSelf ? '#fde047' : '#60a5fa' }}>
+                      {isSelf ? 'You (Employee)' : `${n.role_at_time} (Handler)`}
+                    </span>
+                    <span style={{ fontSize: 11, color: '#475569' }}><ClientDate date={n.created_at} /></span>
+                  </div>
+                  <p style={{ fontSize: 13, color: '#e2e8f0', lineHeight: 1.5 }}>{n.content}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </DashboardLayout>
   );
 }

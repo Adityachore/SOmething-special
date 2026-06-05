@@ -13,34 +13,52 @@ const ROLE_MENUS: Record<string, { href: string; icon: React.ReactNode; label: s
     { href: '/employee/complaints', icon: <FileText size={16}/>, label: 'My Complaints' },
     { href: '/employee/submit', icon: <PlusCircle size={16}/>, label: 'Submit Complaint' },
     { href: '/employee/notifications', icon: <Bell size={16}/>, label: 'Notifications' },
+    { href: '/employee/profile', icon: <Users size={16}/>, label: 'My Profile' },
   ],
   CMD: [
     { href: '/handler', icon: <LayoutDashboard size={16}/>, label: 'Dashboard' },
     { href: '/handler/complaints', icon: <FileText size={16}/>, label: 'Complaints' },
     { href: '/handler/search', icon: <Search size={16}/>, label: 'Search' },
     { href: '/handler/notifications', icon: <Bell size={16}/>, label: 'Notifications' },
+    { href: '/employee/profile', icon: <Users size={16}/>, label: 'My Profile' },
   ],
   HR: [
     { href: '/handler', icon: <LayoutDashboard size={16}/>, label: 'Dashboard' },
     { href: '/handler/complaints', icon: <FileText size={16}/>, label: 'HR Cases' },
+    { href: '/admin/users', icon: <Users size={16}/>, label: 'Employees' },
+    { href: '/admin/profile-requests', icon: <ClipboardList size={16}/>, label: 'Profile Requests' },
     { href: '/handler/search', icon: <Search size={16}/>, label: 'Search' },
     { href: '/handler/notifications', icon: <Bell size={16}/>, label: 'Notifications' },
+    { href: '/employee/profile', icon: <Users size={16}/>, label: 'My Profile' },
   ],
   ADMIN: [
     { href: '/admin', icon: <LayoutDashboard size={16}/>, label: 'Overview' },
     { href: '/admin/complaints', icon: <FileText size={16}/>, label: 'All Complaints' },
-    { href: '/admin/users', icon: <Users size={16}/>, label: 'Users' },
+    { href: '/admin/users', icon: <Users size={16}/>, label: 'Employees' },
+    { href: '/admin/profile-requests', icon: <ClipboardList size={16}/>, label: 'Profile Requests' },
     { href: '/admin/analytics', icon: <BarChart3 size={16}/>, label: 'Analytics' },
     { href: '/admin/audit', icon: <ClipboardList size={16}/>, label: 'Audit Logs' },
     { href: '/admin/settings', icon: <Settings size={16}/>, label: 'Settings' },
+    { href: '/employee/profile', icon: <Users size={16}/>, label: 'My Profile' },
+  ],
+  ORG_ADMIN: [
+    { href: '/admin', icon: <LayoutDashboard size={16}/>, label: 'Overview' },
+    { href: '/admin/complaints', icon: <FileText size={16}/>, label: 'All Complaints' },
+    { href: '/admin/users', icon: <Users size={16}/>, label: 'Employees' },
+    { href: '/admin/profile-requests', icon: <ClipboardList size={16}/>, label: 'Profile Requests' },
+    { href: '/admin/analytics', icon: <BarChart3 size={16}/>, label: 'Analytics' },
+    { href: '/admin/audit', icon: <ClipboardList size={16}/>, label: 'Audit Logs' },
+    { href: '/admin/settings', icon: <Settings size={16}/>, label: 'Settings' },
+    { href: '/employee/profile', icon: <Users size={16}/>, label: 'My Profile' },
   ],
 };
 
 const ROLE_LABEL: Record<string, { label: string; color: string }> = {
-  EMPLOYEE: { label: 'Employee', color: '#10b981' },
-  CMD:      { label: 'Manager', color: '#60a5fa' },
-  HR:       { label: 'HR Manager', color: '#34d399' },
-  ADMIN:    { label: 'Administrator', color: '#f59e0b' },
+  EMPLOYEE:  { label: 'Employee', color: '#eab308' },
+  CMD:       { label: 'Manager', color: '#60a5fa' },
+  HR:        { label: 'HR Manager', color: '#fbbf24' },
+  ADMIN:     { label: 'Administrator', color: '#f59e0b' },
+  ORG_ADMIN: { label: 'Org Admin', color: '#f59e0b' },
 };
 
 export default function Sidebar() {
@@ -56,29 +74,29 @@ export default function Sidebar() {
       <div style={{ display:'flex', alignItems:'center', gap:10, padding:'4px 8px', marginBottom:24 }}>
         <div style={{
           width:34, height:34, borderRadius:10,
-          background:'linear-gradient(135deg,#10b981,#059669)',
+          background:'linear-gradient(135deg,#fbbf24,#d97706)',
           display:'flex', alignItems:'center', justifyContent:'center',
-          boxShadow:'0 0 20px rgba(16,185,129,0.2)', flexShrink:0
+          boxShadow:'0 0 20px rgba(245,158,11,0.2)', flexShrink:0
         }}>
           <Shield size={17} color="white"/>
         </div>
         <div>
           <div style={{ fontSize:13, fontWeight:700, color:'#f1f5f9', lineHeight:1.2 }}>AI Complaint</div>
-          <div style={{ fontSize:10, fontWeight:600, color:'#10b981', letterSpacing:'0.06em' }}>ANALYZER</div>
+          <div style={{ fontSize:10, fontWeight:600, color:'#fbbf24', letterSpacing:'0.06em' }}>ANALYZER</div>
         </div>
       </div>
 
       {/* User pill */}
       <div style={{
-        background:'rgba(16,185,129,0.07)', border:'1px solid rgba(16,185,129,0.18)',
+        background:'rgba(245,158,11,0.07)', border:'1px solid rgba(245,158,11,0.18)',
         borderRadius:12, padding:'10px 12px', marginBottom:20
       }}>
         <div style={{ display:'flex', alignItems:'center', gap:9 }}>
           <div style={{
             width:32, height:32, borderRadius:9, flexShrink:0,
-            background:'linear-gradient(135deg,#10b981,#059669)',
+            background:'linear-gradient(135deg,#fbbf24,#d97706)',
             display:'flex', alignItems:'center', justifyContent:'center',
-            fontSize:13, fontWeight:700, color:'white'
+            fontSize:13, fontWeight:700, color:'#070709'
           }}>
             {(user?.email?.[0] || 'U').toUpperCase()}
           </div>

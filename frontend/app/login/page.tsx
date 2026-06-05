@@ -4,14 +4,23 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Shield, Eye, EyeOff, Zap } from 'lucide-react';
 
+import { useEffect } from 'react';
+
 export default function LoginPage() {
+  const { user, loading: authLoading, login } = useAuth();
+  const router = useRouter();
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
-  const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/');
+    }
+  }, [user, authLoading, router]);
 
   const quickLogin = (role: string) => {
     const map: Record<string, [string, string]> = {
@@ -29,12 +38,21 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push('/');
-    } catch {
-      setError('Invalid email or password. Try a quick login below.');
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.response?.data?.detail || 'Invalid email or password. Try a quick login below.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
+
+  if (authLoading || user) {
+    return (
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'center', height:'100vh' }}>
+        <div className="spinner" />
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:24 }}>
@@ -43,9 +61,9 @@ export default function LoginPage() {
         <div style={{ textAlign:'center', marginBottom:40 }}>
           <div style={{
             width:64, height:64, borderRadius:20, margin:'0 auto 16px',
-            background:'linear-gradient(135deg,#10b981,#059669)',
+            background:'linear-gradient(135deg,#fbbf24,#d97706)',
             display:'flex', alignItems:'center', justifyContent:'center',
-            boxShadow:'0 0 40px rgba(16,185,129,0.3)'
+            boxShadow:'0 0 40px rgba(245,158,11,0.3)'
           }}>
             <Shield size={28} color="white" />
           </div>
@@ -64,7 +82,10 @@ export default function LoginPage() {
               />
             </div>
             <div style={{ marginBottom:24 }}>
-              <label style={{ display:'block', fontSize:13, fontWeight:500, color:'#94a3b8', marginBottom:8 }}>Password</label>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                <label style={{ fontSize:13, fontWeight:500, color:'#94a3b8' }}>Password</label>
+                <a href="/login/forgot" style={{ fontSize:12, color:'#fbbf24', textDecoration:'none' }}>Forgot password?</a>
+              </div>
               <div style={{ position:'relative' }}>
                 <input
                   className="input" type={showPass ? 'text' : 'password'} placeholder="••••••••"
@@ -98,10 +119,10 @@ export default function LoginPage() {
             </div>
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
               {[
-                { role:'admin', label:'Admin', color:'#10b981', bg:'rgba(16,185,129,0.1)' },
-                { role:'hr', label:'HR Manager', color:'#34d399', bg:'rgba(52,211,153,0.1)' },
-                { role:'cmd', label:'CMD', color:'#fbbf24', bg:'rgba(245,158,11,0.1)' },
-                { role:'employee', label:'Employee', color:'#60a5fa', bg:'rgba(96,165,250,0.1)' },
+                { role:'admin', label:'Admin', color:'#f59e0b', bg:'rgba(245,158,11,0.1)' },
+                { role:'hr', label:'HR Manager', color:'#fbbf24', bg:'rgba(251,191,36,0.1)' },
+                { role:'cmd', label:'CMD', color:'#60a5fa', bg:'rgba(96,165,250,0.1)' },
+                { role:'employee', label:'Employee', color:'#eab308', bg:'rgba(234,179,8,0.1)' },
               ].map(({ role, label, color, bg }) => (
                 <button key={role} onClick={() => quickLogin(role)}
                   style={{ padding:'8px 12px', borderRadius:10, border:`1px solid ${color}33`, background:bg, color, fontSize:13, fontWeight:500, cursor:'pointer', transition:'all 0.15s' }}
@@ -111,6 +132,13 @@ export default function LoginPage() {
                 </button>
               ))}
             </div>
+          </div>
+          
+          <div style={{ marginTop: 20, textAlign: 'center', fontSize: 13, color: '#64748b' }}>
+            New organization?{' '}
+            <a href="/signup" style={{ color: '#fbbf24', textDecoration: 'none', fontWeight: 500 }}>
+              Create Organization
+            </a>
           </div>
         </div>
 

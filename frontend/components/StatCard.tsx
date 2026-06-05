@@ -13,7 +13,7 @@ interface StatCardProps {
 }
 
 const COLOR_MAP = {
-  purple: { icon:'rgba(16,185,129,0.15)', iconColor:'#34d399' },
+  purple: { icon:'rgba(251,191,36,0.15)', iconColor:'#fbbf24' },
   amber:  { icon:'rgba(245,158,11,0.15)',  iconColor:'#fbbf24' },
   blue:   { icon:'rgba(59,130,246,0.15)',  iconColor:'#60a5fa' },
   green:  { icon:'rgba(16,185,129,0.15)',  iconColor:'#34d399' },

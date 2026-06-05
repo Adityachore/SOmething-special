@@ -71,6 +71,10 @@ class MetaOverridePayload(BaseModel):
     is_hr_sensitive: bool | None = None
 
 
+class WaitForEmployeePayload(BaseModel):
+    note: str | None = None
+
+
 # ─── Responses ───────────────────────────────────────────────────────────────
 
 class AttachmentResponse(BaseModel):
@@ -130,6 +134,12 @@ class ComplaintResponse(BaseModel):
     escalation_level: int
     sla_due_at: datetime | None
     cluster_id: str | None
+    is_repeated: bool
+    repeat_count_at_assignment: int
+    similarity_score: float | None = None
+    is_valuable: bool
+    ai_value_reason: str | None = None
+    is_within_sla: bool | None = None
     created_at: datetime
     updated_at: datetime
     resolved_at: datetime | None

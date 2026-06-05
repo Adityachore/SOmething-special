@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 def _require_admin(user: User):
-    if user.role != UserRole.ADMIN:
+    if user.role not in (UserRole.ADMIN, UserRole.ORG_ADMIN):
         raise ForbiddenError("Admin access required.")
 
 
@@ -32,19 +32,40 @@ async def analytics_overview(
 
 @router.get("/audit-logs", response_model=list[AuditLogResponse])
 async def list_audit_logs(
+    response: Response,
     complaint_id: str | None = Query(None),
+    actor_user_id: str | None = Query(None),
+    action_type: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     _require_admin(user)
-    q = select(ComplaintAuditLog).order_by(ComplaintAuditLog.created_at.desc())
+    q_base = select(ComplaintAuditLog)
     if complaint_id:
-        q = q.where(ComplaintAuditLog.complaint_id == complaint_id)
+        if len(complaint_id) == 36:
+            q_base = q_base.where(ComplaintAuditLog.complaint_id == complaint_id)
+        else:
+            q_base = q_base.where(ComplaintAuditLog.complaint_id.ilike(f"%{complaint_id}%"))
+    if actor_user_id:
+        q_base = q_base.where(ComplaintAuditLog.actor_user_id == actor_user_id)
+    if action_type:
+        q_base = q_base.where(ComplaintAuditLog.action_type == action_type)
+
+    # Get total count
+    count_q = select(func.count()).select_from(q_base.subquery())
+    count_result = await db.execute(count_q)
+    total = count_result.scalar_one()
+
+    q = q_base.order_by(ComplaintAuditLog.created_at.desc())
     q = q.offset((page - 1) * page_size).limit(page_size)
+
     result = await db.execute(q)
     logs = result.scalars().all()
+
+    response.headers["X-Total-Count"] = str(total)
+    response.headers["Access-Control-Expose-Headers"] = "X-Total-Count"
     return [AuditLogResponse.model_validate(l) for l in logs]
 
 
