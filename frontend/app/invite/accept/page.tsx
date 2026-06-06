@@ -187,14 +187,16 @@ function AcceptInvitationForm() {
 
 export default function AcceptInvitationPage() {
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <Suspense fallback={
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
-          <div className="spinner" />
-        </div>
-      }>
-        <AcceptInvitationForm />
-      </Suspense>
+    <div style={{ height: '100vh', overflowY: 'auto', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ minHeight: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24, width: '100%' }}>
+        <Suspense fallback={
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+            <div className="spinner" />
+          </div>
+        }>
+          <AcceptInvitationForm />
+        </Suspense>
+      </div>
     </div>
   );
 }
