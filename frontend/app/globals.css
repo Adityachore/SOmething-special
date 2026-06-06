@@ -137,7 +137,8 @@ h1, h2, h3, h4, h5, h6, .font-heading {
   height: 2px;
   border-radius: 16px 16px 0 0;
 }
-.stat-card:hover { transform: translateY(-2px); border-color: var(--border-hover); }
+.stat-card.clickable { cursor: pointer; }
+.stat-card.clickable:hover { transform: translateY(-2px); border-color: var(--border-hover); }
 .stat-card.purple::before { background: var(--purple); }
 .stat-card.amber::before  { background: var(--amber); }
 .stat-card.blue::before   { background: var(--blue); }
@@ -310,6 +311,58 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 .input::placeholder, .textarea::placeholder { color: var(--text-muted); }
 .textarea { resize: vertical; min-height: 100px; }
 .select { appearance: none; cursor: pointer; }
+
+/* ─── Checkboxes ─────────────────────────────────── */
+input[type="checkbox"] {
+  appearance: none;
+  background-color: rgba(255, 255, 255, 0.05);
+  margin: 0;
+  font: inherit;
+  color: currentColor;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+input[type="checkbox"]::before {
+  content: "";
+  width: 10px;
+  height: 10px;
+  transform: scale(0);
+  transition: 120ms transform ease-in-out;
+  box-shadow: inset 1em 1em var(--bg-primary);
+  background-color: var(--bg-primary);
+  transform-origin: center;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--purple);
+  border-color: var(--purple);
+}
+
+input[type="checkbox"]:checked::before {
+  transform: scale(1);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #e2e8f0;
+  cursor: pointer;
+}
+.checkbox-label:hover {
+  color: #f1f5f9;
+}
 
 /* ─── Progress bar ───────────────────────────────── */
 .progress-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.07); overflow: hidden; }

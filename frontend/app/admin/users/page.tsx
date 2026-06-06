@@ -637,28 +637,25 @@ export default function AdminUsers() {
               <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 12, marginBottom: 18 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 10 }}>User Capabilities & Access</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#e2e8f0', cursor: 'pointer' }}>
+                  <label className="checkbox-label">
                     <input 
                       type="checkbox" 
-                      style={{ cursor: 'pointer' }}
                       checked={form.can_assign_complaints} 
                       onChange={e => setForm(f => ({...f, can_assign_complaints: e.target.checked}))}
                     />
                     Can assign complaints to handlers
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#e2e8f0', cursor: 'pointer' }}>
+                  <label className="checkbox-label">
                     <input 
                       type="checkbox" 
-                      style={{ cursor: 'pointer' }}
                       checked={form.can_resolve_complaints} 
                       onChange={e => setForm(f => ({...f, can_resolve_complaints: e.target.checked}))}
                     />
                     Can resolve and reject complaints
                   </label>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, color: '#e2e8f0', cursor: 'pointer' }}>
+                  <label className="checkbox-label">
                     <input 
                       type="checkbox" 
-                      style={{ cursor: 'pointer' }}
                       checked={form.can_view_hr_sensitive} 
                       onChange={e => setForm(f => ({...f, can_view_hr_sensitive: e.target.checked}))}
                     />

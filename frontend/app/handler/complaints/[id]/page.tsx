@@ -175,6 +175,12 @@ export default function HandlerComplaintDetail() {
             {(isPending || isInProgress || isWaiting) && <button className="btn btn-success" onClick={() => setModal('resolve')}><CheckCircle size={14}/> Resolve</button>}
             {(isPending || isInProgress || isWaiting) && <button className="btn btn-danger" onClick={() => setModal('reject')}><XCircle size={14}/> Reject</button>}
             {isWaiting && <button className="btn btn-primary" onClick={() => doAction(() => startComplaint(id), 'Work resumed!')}><Play size={14}/> Resume</button>}
+            {(isPending || isInProgress || isWaiting) && (
+              <>
+                <button className="btn btn-secondary" onClick={() => fileRef.current?.click()}><Upload size={14}/> Upload</button>
+                <input ref={fileRef} type="file" hidden onChange={handleUpload}/>
+              </>
+            )}
             {canClose && <button className="btn btn-success" onClick={() => doAction(() => closeComplaint(id), 'Complaint closed!')}><CheckCircle size={14}/> Close</button>}
             {canReopen && <button className="btn btn-secondary" onClick={() => doAction(() => reopenComplaint(id), 'Reopened!')}><RotateCcw size={14}/> Reopen</button>}
             {(isInProgress || isPending) && <button className="btn btn-secondary" onClick={openAssignModal}><UserPlus size={14}/> {c.assigned_to_user_id ? 'Reassign' : 'Assign'}</button>}
@@ -233,30 +239,30 @@ export default function HandlerComplaintDetail() {
       )}
 
       {/* Attachments */}
-      <div className="glass" style={{ padding:20, marginBottom:20 }}>
-        <div className="section-header" style={{ marginBottom:12 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8 }}><Paperclip size={16} style={{ color:'#64748b' }}/><span style={{ fontSize:14, fontWeight:600, color:'#f1f5f9' }}>Attachments ({c.attachments?.length || 0})</span></div>
-          <button className="btn btn-secondary" onClick={() => fileRef.current?.click()} style={{ fontSize:12 }}><Upload size={13}/> Upload</button>
-          <input ref={fileRef} type="file" hidden onChange={handleUpload}/>
-        </div>
-        {c.attachments?.map((a:any) => (
-          <div key={a.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
-            <Paperclip size={12} style={{ color:'#64748b' }}/>
-            <span style={{ fontSize:13, color:'#94a3b8', flex:1 }}>{a.original_name}</span>
-            <span style={{ fontSize:11, color:'#64748b', marginRight:10 }}>{(a.size_bytes/1024).toFixed(1)} KB</span>
-            <button className="btn btn-secondary" onClick={() => handleDownloadAttachment(a.id, a.original_name)} style={{ padding: '4px 8px', fontSize: 11 }}>Download</button>
-            {currentUser?.role === 'ADMIN' && (
-              <button 
-                className="btn btn-danger" 
-                onClick={() => handleDeleteAttachment(a.id)} 
-                style={{ padding: '4px 8px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 2 }}
-              >
-                <Trash2 size={11}/> Delete
-              </button>
-            )}
+      {c.attachments?.length > 0 && (
+        <div className="glass" style={{ padding:20, marginBottom:20 }}>
+          <div className="section-header" style={{ marginBottom:12 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}><Paperclip size={16} style={{ color:'#64748b' }}/><span style={{ fontSize:14, fontWeight:600, color:'#f1f5f9' }}>Attachments ({c.attachments.length})</span></div>
           </div>
-        ))}
-      </div>
+          {c.attachments.map((a:any) => (
+            <div key={a.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
+              <Paperclip size={12} style={{ color:'#64748b' }}/>
+              <span style={{ fontSize:13, color:'#94a3b8', flex:1 }}>{a.original_name}</span>
+              <span style={{ fontSize:11, color:'#64748b', marginRight:10 }}>{(a.size_bytes/1024).toFixed(1)} KB</span>
+              <button className="btn btn-secondary" onClick={() => handleDownloadAttachment(a.id, a.original_name)} style={{ padding: '4px 8px', fontSize: 11 }}>Download</button>
+              {currentUser?.role === 'ADMIN' && (
+                <button 
+                  className="btn btn-danger" 
+                  onClick={() => handleDeleteAttachment(a.id)} 
+                  style={{ padding: '4px 8px', fontSize: 11, display: 'flex', alignItems: 'center', gap: 2 }}
+                >
+                  <Trash2 size={11}/> Delete
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Tabs: Notes / Audit */}
       <div className="tab-bar" style={{ marginBottom:16, maxWidth:280 }}>
@@ -269,7 +275,7 @@ export default function HandlerComplaintDetail() {
           <form onSubmit={handleAddNote} style={{ display:'flex', gap:10, marginBottom:16, alignItems:'flex-end' }}>
             <div style={{ flex:1 }}>
               <textarea className="input textarea" rows={2} placeholder="Add internal note..." value={noteForm.content} onChange={e => setNoteForm(f=>({...f,content:e.target.value}))}/>
-              <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#64748b', marginTop:6, cursor:'pointer' }}>
+              <label className="checkbox-label" style={{ marginTop:6 }}>
                 <input type="checkbox" checked={noteForm.is_visible_to_employee} onChange={e => setNoteForm(f=>({...f,is_visible_to_employee:e.target.checked}))}/>
                 {noteForm.is_visible_to_employee ? <Eye size={12}/> : <EyeOff size={12}/>} Visible to employee
               </label>
@@ -359,7 +365,7 @@ export default function HandlerComplaintDetail() {
               <label style={{ display:'block', fontSize:13, color:'#94a3b8', marginBottom:6 }}>Root Cause (optional)</label>
               <textarea className="input textarea" rows={2} value={resolveForm.root_cause} onChange={e => setResolveForm(f=>({...f,root_cause:e.target.value}))}/>
             </div>
-            <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:13, color:'#94a3b8', marginBottom:16, cursor:'pointer' }}>
+            <label className="checkbox-label" style={{ marginBottom:16 }}>
               <input type="checkbox" checked={resolveForm.visible_to_employee} onChange={e => setResolveForm(f=>({...f,visible_to_employee:e.target.checked}))}/>
               Visible to employee
             </label>
@@ -423,7 +429,7 @@ export default function HandlerComplaintDetail() {
                 <option value="CRITICAL">CRITICAL</option>
               </select>
             </div>
-            <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:13, color:'#94a3b8', marginBottom:16, cursor:'pointer' }}>
+            <label className="checkbox-label" style={{ marginBottom:16 }}>
               <input type="checkbox" checked={overrideForm.is_hr_sensitive} onChange={e => setOverrideForm(f=>({...f,is_hr_sensitive:e.target.checked}))}/>
               HR Sensitive / Whistleblower Case
             </label>

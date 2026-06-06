@@ -255,8 +255,8 @@ export default function SubmitComplaint() {
                   <div style={{ fontSize: 13, fontWeight: 600, color: '#f1f5f9', marginBottom: 4 }}>Privacy Settings</div>
                   
                   {/* Anonymity */}
-                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', marginBottom: 10, fontSize: 12.5, color: '#cbd5e1' }}>
-                    <input type="checkbox" checked={form.is_anonymous} onChange={e => setForm(f => ({ ...f, is_anonymous: e.target.checked }))} style={{ accentColor: '#10b981' }} />
+                  <label className="checkbox-label" style={{ marginBottom: 10 }}>
+                    <input type="checkbox" checked={form.is_anonymous} onChange={e => setForm(f => ({ ...f, is_anonymous: e.target.checked }))} />
                     Submit Anonymous Complaint
                   </label>
                   <p style={{ fontSize: 11, color: '#64748b', marginBottom: 12 }}>

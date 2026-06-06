@@ -62,3 +62,7 @@ class User(Base):
         back_populates="reviewer",
         foreign_keys="ProfileUpdateRequest.reviewed_by"
     )
+
+    @property
+    def tenant_name(self) -> str | None:
+        return self.tenant.name if self.tenant else None

@@ -29,7 +29,7 @@ async def get_current_user(
 
     result = await db.execute(
         select(User)
-        .options(selectinload(User.department_rel))
+        .options(selectinload(User.department_rel), selectinload(User.tenant))
         .where(User.id == user_id, User.deleted_at.is_(None))
     )
     user = result.scalar_one_or_none()

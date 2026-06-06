@@ -6,16 +6,13 @@ import TableSkeleton from '@/components/TableSkeleton';
 import StatCard from '@/components/StatCard';
 import { PriorityBadge, StatusBadge } from '@/components/Badges';
 import ClientDate from '@/components/ClientDate';
-import { getMyComplaints, createComplaint } from '@/lib/api';
-import { FileText, Clock, CheckCircle, AlertTriangle, Plus, X, Brain } from 'lucide-react';
+import { getMyComplaints } from '@/lib/api';
+import { FileText, Clock, CheckCircle, AlertTriangle, Plus, Brain } from 'lucide-react';
 
 export default function EmployeeDashboard() {
   const router = useRouter();
   const [complaints, setComplaints] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ title: '', description: '', is_anonymous: false });
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const load = () => {
@@ -32,20 +29,6 @@ export default function EmployeeDashboard() {
     pending: complaints.filter(c => c.status === 'PENDING').length,
     in_progress: complaints.filter(c => c.status === 'IN_PROGRESS' || c.status === 'WAITING_FOR_EMPLOYEE').length,
     solved: complaints.filter(c => c.status === 'SOLVED' || c.status === 'CLOSED').length,
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (form.description.trim().length < 20) { setError('Description must be at least 20 characters.'); return; }
-    setSubmitting(true); setError('');
-    try {
-      await createComplaint({ title: form.title, description: form.description, is_anonymous: form.is_anonymous });
-      load();
-      setShowModal(false);
-      setForm({ title: '', description: '', is_anonymous: false });
-    } catch (err: any) {
-      setError(err.response?.data?.detail || err.response?.data?.message || 'Failed to submit.');
-    } finally { setSubmitting(false); }
   };
 
   return (
@@ -66,7 +49,7 @@ export default function EmployeeDashboard() {
               <div className="section-title">My Complaints</div>
               <div className="section-sub">{complaints.length} total</div>
             </div>
-            <button className="btn btn-primary" onClick={() => setShowModal(true)}><Plus size={15}/> New Complaint</button>
+            <button className="btn btn-primary" onClick={() => router.push('/employee/submit')}><Plus size={15}/> New Complaint</button>
           </div>
           {loading ? (
             <TableSkeleton cols={5} rows={5} />
@@ -74,7 +57,7 @@ export default function EmployeeDashboard() {
             <div className="empty-state">
               <FileText size={40}/>
               <p>No complaints yet</p>
-              <button className="btn btn-primary" onClick={() => setShowModal(true)} style={{ marginTop:8 }}>Submit your first complaint</button>
+              <button className="btn btn-primary" onClick={() => router.push('/employee/submit')} style={{ marginTop:8 }}>Submit your first complaint</button>
             </div>
           ) : (
             <div style={{ overflowX:'auto' }}>
@@ -113,23 +96,14 @@ export default function EmployeeDashboard() {
         <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
           <div className="info-box">
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:12 }}>
-              <div style={{ width:34, height:34, borderRadius:10, background:'linear-gradient(135deg,var(--purple),var(--purple-light))', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                <Brain size={17} color="white"/>
+              <div style={{ width:34, height:34, borderRadius:10, background:'rgba(59,130,246,0.1)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <FileText size={17} style={{ color: '#60a5fa' }}/>
               </div>
               <div>
-                <div style={{ fontSize:14, fontWeight:600, color:'#f1f5f9' }}>AI Processing</div>
-                <div className="ai-badge" style={{ marginTop:3 }}>Gemini 1.5 Flash</div>
+                <div style={{ fontSize:14, fontWeight:600, color:'#f1f5f9' }}>Review Process</div>
               </div>
             </div>
-            <p style={{ fontSize:12, color:'#94a3b8', lineHeight:1.6 }}>Complaints are auto-categorized, prioritized, and summarized by AI.</p>
-            <div style={{ marginTop:12, display:'flex', flexDirection:'column', gap:6 }}>
-              {['Auto-categorization','Priority scoring','Smart routing','SLA tracking'].map(f => (
-                <div key={f} style={{ display:'flex', alignItems:'center', gap:7, fontSize:12, color:'#94a3b8' }}>
-                  <div style={{ width:5, height:5, borderRadius:'50%', background:'var(--purple)', flexShrink:0 }}/>
-                  {f}
-                </div>
-              ))}
-            </div>
+            <p style={{ fontSize:12, color:'#94a3b8', lineHeight:1.6 }}>Your complaints are reviewed by authorized HR/CMD teams. Please share clear details to help resolve your issue.</p>
           </div>
 
           <div className="glass" style={{ padding:20 }}>
@@ -150,50 +124,6 @@ export default function EmployeeDashboard() {
           </div>
         </div>
       </div>
-
-      {/* Submit Modal */}
-      {showModal && (
-        <div className="modal-overlay" onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
-          <div className="modal-box animate-fade-in">
-            <div className="section-header" style={{ marginBottom:24 }}>
-              <div>
-                <h2 style={{ fontSize:18, fontWeight:700, color:'#f1f5f9' }}>Submit Complaint</h2>
-                <p className="section-sub">AI will analyze and route automatically</p>
-              </div>
-              <button className="btn-icon" onClick={() => setShowModal(false)}><X size={16}/></button>
-            </div>
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom:16 }}>
-                <label style={{ display:'block', fontSize:13, fontWeight:500, color:'#94a3b8', marginBottom:6 }}>Title</label>
-                <input className="input" placeholder="Brief title" value={form.title} onChange={e => setForm(f => ({...f, title:e.target.value}))} required/>
-              </div>
-              <div style={{ marginBottom:18 }}>
-                <label style={{ display:'block', fontSize:13, fontWeight:500, color:'#94a3b8', marginBottom:6 }}>Description <span style={{ color:'#475569' }}>(min 20 chars)</span></label>
-                <textarea className="input textarea" rows={5} placeholder="Describe your complaint in detail..." value={form.description} onChange={e => setForm(f => ({...f, description:e.target.value}))} required/>
-              </div>
-              <div style={{ marginBottom:16 }}>
-                <label style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'#94a3b8', cursor:'pointer' }}>
-                  <input
-                    type="checkbox"
-                    checked={form.is_anonymous}
-                    onChange={e => setForm(f => ({...f, is_anonymous: e.target.checked}))}
-                    style={{ width:15, height:15, accentColor:'#10b981' }}
-                  />
-                  <span>Submit anonymously</span>
-                  <span style={{ fontSize:11, color:'#475569' }}>(your name will be hidden from handlers)</span>
-                </label>
-              </div>
-              {error && <div className="error-box" style={{ marginBottom:14 }}>{error}</div>}
-              <div style={{ display:'flex', gap:10 }}>
-                <button type="button" className="btn btn-secondary" style={{ flex:1 }} onClick={() => setShowModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" style={{ flex:2 }} disabled={submitting}>
-                  {submitting ? <div className="spinner spinner-sm"/> : <><Brain size={15}/> Submit</>}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </DashboardLayout>
   );
 }

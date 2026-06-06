@@ -186,7 +186,7 @@ export default function HandlerComplaintDetail() {
           <form onSubmit={handleAddNote} style={{ display:'flex', gap:10, marginBottom:16, alignItems:'flex-end' }}>
             <div style={{ flex:1 }}>
               <textarea className="input textarea" rows={2} placeholder="Add internal note..." value={noteForm.content} onChange={e => setNoteForm(f=>({...f,content:e.target.value}))}/>
-              <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#64748b', marginTop:6, cursor:'pointer' }}>
+              <label className="checkbox-label" style={{ marginTop:6 }}>
                 <input type="checkbox" checked={noteForm.is_visible_to_employee} onChange={e => setNoteForm(f=>({...f,is_visible_to_employee:e.target.checked}))}/>
                 {noteForm.is_visible_to_employee ? <Eye size={12}/> : <EyeOff size={12}/>} Visible to employee
               </label>
@@ -276,7 +276,7 @@ export default function HandlerComplaintDetail() {
               <label style={{ display:'block', fontSize:13, color:'#94a3b8', marginBottom:6 }}>Root Cause (optional)</label>
               <textarea className="input textarea" rows={2} value={resolveForm.root_cause} onChange={e => setResolveForm(f=>({...f,root_cause:e.target.value}))}/>
             </div>
-            <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:13, color:'#94a3b8', marginBottom:16, cursor:'pointer' }}>
+            <label className="checkbox-label" style={{ marginBottom:16 }}>
               <input type="checkbox" checked={resolveForm.visible_to_employee} onChange={e => setResolveForm(f=>({...f,visible_to_employee:e.target.checked}))}/>
               Visible to employee
             </label>
@@ -340,7 +340,7 @@ export default function HandlerComplaintDetail() {
                 <option value="CRITICAL">CRITICAL</option>
               </select>
             </div>
-            <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:13, color:'#94a3b8', marginBottom:16, cursor:'pointer' }}>
+            <label className="checkbox-label" style={{ marginBottom:16 }}>
               <input type="checkbox" checked={overrideForm.is_hr_sensitive} onChange={e => setOverrideForm(f=>({...f,is_hr_sensitive:e.target.checked}))}/>
               HR Sensitive / Whistleblower Case
             </label>

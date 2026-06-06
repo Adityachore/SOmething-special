@@ -16,4 +16,5 @@ export {
   Cell,
   AreaChart,
   Area,
+  Legend,
 } from 'recharts';

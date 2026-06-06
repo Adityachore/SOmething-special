@@ -63,7 +63,7 @@ function SearchContent() {
             <label style={{ display:'block', fontSize:12, color:'#64748b', marginBottom:4 }}>Department</label>
             <input className="input" placeholder="Any" value={dept} onChange={e => setDept(e.target.value)}/>
           </div>
-          <label style={{ display:'flex', alignItems:'center', gap:6, fontSize:12, color:'#94a3b8', cursor:'pointer', paddingBottom:4 }}>
+          <label className="checkbox-label" style={{ paddingBottom:4 }}>
             <input type="checkbox" checked={hrOnly} onChange={e => setHrOnly(e.target.checked)}/> HR Only
           </label>
           <button className="btn btn-primary" onClick={doSearch}><Search size={14}/> Search</button>

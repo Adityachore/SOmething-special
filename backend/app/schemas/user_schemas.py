@@ -41,6 +41,7 @@ class UserUpdate(BaseModel):
 class UserResponse(BaseModel):
     id: str
     tenant_id: str
+    tenant_name: str | None = None
     name: str
     email: str
     role: UserRole

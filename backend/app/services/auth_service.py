@@ -20,8 +20,9 @@ class AuthService:
 
     @staticmethod
     async def login(db: AsyncSession, email: str, password: str) -> TokenResponse:
+        from sqlalchemy.orm import selectinload
         result = await db.execute(
-            select(User).where(func.lower(User.email) == func.lower(email), User.deleted_at.is_(None))
+            select(User).options(selectinload(User.tenant)).where(func.lower(User.email) == func.lower(email), User.deleted_at.is_(None))
         )
         user = result.scalar_one_or_none()
         if not user or not verify_password(password, user.hashed_password):
@@ -52,6 +53,7 @@ class AuthService:
             user_id=user.id,
             role=user.role,
             tenant_id=user.tenant_id,
+            tenant_name=user.tenant.name if user.tenant else None,
         )
 
     @staticmethod

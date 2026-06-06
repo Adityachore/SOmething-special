@@ -1,6 +1,6 @@
 'use client';
 import { ReactNode } from 'react';
-import { TrendingUp, TrendingDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, ChevronRight } from 'lucide-react';
 
 interface StatCardProps {
   label: string;
@@ -10,6 +10,7 @@ interface StatCardProps {
   trend?: number;
   trendLabel?: string;
   subtitle?: string;
+  onClick?: () => void;
 }
 
 const COLOR_MAP = {
@@ -20,11 +21,11 @@ const COLOR_MAP = {
   red:    { icon:'rgba(239,68,68,0.15)',   iconColor:'#f87171' },
 };
 
-export default function StatCard({ label, value, icon, color, trend, trendLabel, subtitle }: StatCardProps) {
+export default function StatCard({ label, value, icon, color, trend, trendLabel, subtitle, onClick }: StatCardProps) {
   const c = COLOR_MAP[color];
   const isPos = trend !== undefined && trend >= 0;
   return (
-    <div className={`stat-card ${color}`}>
+    <div className={`stat-card ${color} ${onClick ? 'clickable' : ''}`} onClick={onClick} role={onClick ? 'button' : undefined}>
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12 }}>
         <div>
           <p style={{ fontSize:12, fontWeight:500, color:'#64748b', marginBottom:10, textTransform:'uppercase', letterSpacing:'0.06em' }}>{label}</p>
@@ -40,12 +41,15 @@ export default function StatCard({ label, value, icon, color, trend, trendLabel,
           )}
           {subtitle && <p style={{ fontSize:12, color:'#475569', marginTop:4 }}>{subtitle}</p>}
         </div>
-        <div style={{
-          width:44, height:44, borderRadius:12, flexShrink:0,
-          background:c.icon, display:'flex', alignItems:'center', justifyContent:'center',
-          color:c.iconColor
-        }}>
-          {icon}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width:44, height:44, borderRadius:12, flexShrink:0,
+            background:c.icon, display:'flex', alignItems:'center', justifyContent:'center',
+            color:c.iconColor
+          }}>
+            {icon}
+          </div>
+          {onClick && <ChevronRight size={18} style={{ color: '#64748b' }} />}
         </div>
       </div>
     </div>

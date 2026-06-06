@@ -71,7 +71,7 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       {/* Logo */}
-      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'4px 8px', marginBottom:24 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:10, padding:'4px 8px', marginBottom: user?.tenant_name ? 16 : 24 }}>
         <div style={{
           width:34, height:34, borderRadius:10,
           background:'linear-gradient(135deg,#fbbf24,#d97706)',
@@ -85,6 +85,16 @@ export default function Sidebar() {
           <div style={{ fontSize:10, fontWeight:600, color:'#fbbf24', letterSpacing:'0.06em' }}>ANALYZER</div>
         </div>
       </div>
+
+      {/* Organization Info */}
+      {user?.tenant_name && (
+        <div style={{ padding: '0 8px', marginBottom: 20 }}>
+          <div style={{ fontSize: 10, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4 }}>Organization</div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: '#f1f5f9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {user.tenant_name}
+          </div>
+        </div>
+      )}
 
       {/* User pill */}
       <div style={{

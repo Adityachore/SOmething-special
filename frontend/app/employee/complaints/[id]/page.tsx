@@ -6,7 +6,7 @@ import { StatusBadge, PriorityBadge } from '@/components/Badges';
 import ClientDate from '@/components/ClientDate';
 import { getComplaint, withdrawComplaint, rateComplaint, updateComplaint, deleteAttachment, getNotes, addNote } from '@/lib/api';
 import api from '@/lib/api';
-import { ArrowLeft, Star, Clock, Brain, Edit3, X, Check, Paperclip, Trash2 } from 'lucide-react';
+import { ArrowLeft, Star, Clock, FileText, Edit3, X, Check, Paperclip, Trash2 } from 'lucide-react';
 
 export default function EmployeeComplaintDetail() {
   const { id } = useParams<{ id: string }>();
@@ -186,27 +186,14 @@ export default function EmployeeComplaintDetail() {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: c.assigned_to_user_id ? '1fr 1fr' : '1fr', gap: 20, marginBottom: 20 }}>
-        {/* AI Analysis */}
-        {c.assigned_to_user_id && (
-          <div className="glass" style={{ padding: 20 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-              <Brain size={16} style={{ color: '#34d399' }}/>
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>AI Analysis</span>
-            </div>
-            {[
-              { label: 'Summary', value: c.ai_summary },
-              { label: 'Category Reason', value: c.ai_categorization_reason },
-              { label: 'Priority Reason', value: c.ai_priority_reason },
-              { label: 'Sub-category', value: c.sub_category },
-            ].map(item => item.value && (
-              <div key={item.label} style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 3 }}>{item.label}</div>
-                <div style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>{item.value}</div>
-              </div>
-            ))}
-            {!c.ai_summary && <div style={{ fontSize: 13, color: '#64748b' }}>AI analysis pending...</div>}
+        {/* Review Process */}
+        <div className="glass" style={{ padding: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <FileText size={16} style={{ color: '#60a5fa' }}/>
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#f1f5f9' }}>Review Process</span>
           </div>
-        )}
+          <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.6 }}>Your complaint is being reviewed by authorized HR/CMD teams. Please share clear details to help resolve your issue.</p>
+        </div>
 
         {/* Timeline */}
         <div className="glass" style={{ padding: 20 }}>

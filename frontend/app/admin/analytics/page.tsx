@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { getAnalytics } from '@/lib/api';
 import { Clock, AlertTriangle, Repeat } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from '@/lib/charts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from '@/lib/charts';
 
 const STATUS_COLORS: Record<string,string> = { pending:'#f59e0b', in_progress:'#3b82f6', solved:'#10b981', rejected:'#ef4444', withdrawn:'#64748b', expired:'#94a3b8' };
 const PRIORITY_COLORS = ['#ef4444','#f59e0b','#3b82f6','#10b981'];
@@ -73,7 +73,8 @@ export default function AdminAnalytics() {
             <BarChart data={statusData} layout="vertical" barSize={18}>
               <XAxis type="number" tick={{ fontSize:11, fill:'#64748b' }} axisLine={false} tickLine={false}/>
               <YAxis type="category" dataKey="name" tick={{ fontSize:11, fill:'#94a3b8' }} axisLine={false} tickLine={false} width={80}/>
-              <Tooltip contentStyle={{ background:'#1e293b', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, fontSize:12 }}/>
+              <Tooltip cursor={{ fill: 'rgba(255,255,255,0.02)' }} contentStyle={{ background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:8, fontSize:12, color:'#cbd5e1' }} itemStyle={{ color: '#cbd5e1' }} />
+              <Legend wrapperStyle={{ fontSize: 11, color: '#94a3b8', paddingTop: 10 }} />
               <Bar dataKey="value" radius={[0,4,4,0]}>
                 {statusData.map((d,i) => <Cell key={i} fill={d.color}/>)}
               </Bar>
@@ -90,7 +91,7 @@ export default function AdminAnalytics() {
                 <Pie data={priorityData} cx={65} cy={65} innerRadius={38} outerRadius={60} dataKey="value">
                   {priorityData.map((_,i) => <Cell key={i} fill={PRIORITY_COLORS[i%PRIORITY_COLORS.length]}/>)}
                 </Pie>
-                <Tooltip contentStyle={{ background:'#1e293b', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, fontSize:12 }}/>
+                <Tooltip contentStyle={{ background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:8, fontSize:12, color:'#cbd5e1' }} itemStyle={{ color: '#cbd5e1' }} />
               </PieChart>
               <div>
                 {priorityData.map((d,i) => (
@@ -114,7 +115,8 @@ export default function AdminAnalytics() {
             <BarChart data={deptData} barSize={32}>
               <XAxis dataKey="name" tick={{ fontSize:11, fill:'#64748b' }} axisLine={false} tickLine={false}/>
               <YAxis tick={{ fontSize:11, fill:'#64748b' }} axisLine={false} tickLine={false}/>
-              <Tooltip contentStyle={{ background:'#1e293b', border:'1px solid rgba(255,255,255,0.1)', borderRadius:8, fontSize:12 }}/>
+              <Tooltip cursor={{ fill: 'rgba(255,255,255,0.02)' }} contentStyle={{ background:'var(--bg-secondary)', border:'1px solid var(--border)', borderRadius:8, fontSize:12, color:'#cbd5e1' }} itemStyle={{ color: '#cbd5e1' }} />
+              <Legend wrapperStyle={{ fontSize: 11, color: '#94a3b8', paddingTop: 10 }} />
               <Bar dataKey="value" radius={[4,4,0,0]}>
                 {deptData.map((_,i) => <Cell key={i} fill={DEPT_COLORS[i%DEPT_COLORS.length]}/>)}
               </Bar>

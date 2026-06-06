@@ -14,6 +14,7 @@ class TokenResponse(BaseModel):
     user_id: str
     role: UserRole
     tenant_id: str
+    tenant_name: str | None = None
 
 
 class RefreshRequest(BaseModel):
