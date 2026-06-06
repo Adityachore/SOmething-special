@@ -279,6 +279,17 @@ async def bulk_upload_employees(
             )
             existing_user = result.scalar_one_or_none()
 
+            # Verify email uniqueness globally to prevent conflicts across tenants
+            global_res = await db.execute(
+                select(User).where(
+                    func.lower(User.email) == func.lower(email),
+                    User.deleted_at.is_(None)
+                )
+            )
+            global_user = global_res.scalar_one_or_none()
+            if global_user and global_user.tenant_id != user.tenant_id:
+                raise ValueError(f"Email '{email}' is already registered in another organization.")
+
             if existing_user:
                 # If email matches another user but employee_id is different, block
                 if existing_user.employee_id and existing_user.employee_id != emp_id:
@@ -402,6 +413,18 @@ async def request_profile_update(
     if payload.field not in allowed_fields:
         raise ValidationError(f"Updates for field '{payload.field}' are not permitted.")
 
+    if payload.field == "email":
+        # Check email uniqueness globally (case-insensitive)
+        email_res = await db.execute(
+            select(User).where(
+                func.lower(User.email) == payload.new_value.lower(),
+                User.id != user.id,
+                User.deleted_at.is_(None)
+            )
+        )
+        if email_res.scalar_one_or_none():
+            raise ConflictError(f"User with email '{payload.new_value}' already exists.")
+
     req = ProfileUpdateRequest(
         tenant_id=user.tenant_id,
         user_id=user.id,
@@ -503,6 +526,18 @@ async def review_profile_request(
     if payload.status == "Approved":
         # Dynamic update on User model!
         if hasattr(target_user, req.field):
+            if req.field == "email":
+                # Check email uniqueness globally (case-insensitive) to prevent cross-tenant collisions
+                email_res = await db.execute(
+                    select(User).where(
+                        func.lower(User.email) == req.new_value.lower(),
+                        User.id != target_user.id,
+                        User.deleted_at.is_(None)
+                    )
+                )
+                if email_res.scalar_one_or_none():
+                    raise ConflictError(f"User with email '{req.new_value}' already exists.")
+
             if req.field == "date_of_joining":
                 # Parse date
                 try:

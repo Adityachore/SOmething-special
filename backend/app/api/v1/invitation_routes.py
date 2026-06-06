@@ -123,6 +123,8 @@ async def accept_invitation(
     
     hashed_pwd = hash_password(payload.password)
     if user:
+        if user.tenant_id != inv.tenant_id:
+            raise HTTPException(status_code=400, detail="User with this email is already registered in another organization.")
         user.hashed_password = hashed_pwd
         user.role = inv.role
         user.department_id = inv.department_id

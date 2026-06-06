@@ -10,11 +10,10 @@ class UserService:
 
     @staticmethod
     async def create_user(db: AsyncSession, tenant_id: str, payload: UserCreate) -> UserResponse:
-        # Check email uniqueness within tenant (case-insensitive)
+        # Check email uniqueness globally (case-insensitive)
         result = await db.execute(
             select(User).where(
                 func.lower(User.email) == payload.email.lower(),
-                User.tenant_id == tenant_id,
                 User.deleted_at.is_(None)
             )
         )
