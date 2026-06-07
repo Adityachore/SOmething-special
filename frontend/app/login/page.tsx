@@ -94,6 +94,9 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
+        * {
+          box-sizing: border-box;
+        }
         :root {
           --primary-bg: #030712;
           --panel-bg: #0b1120;
@@ -362,11 +365,12 @@ export default function LoginPage() {
           flex: 1;
           position: relative;
           background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
-          overflow-y: auto;
-          overflow-x: hidden;
-          padding: 60px;
+          overflow: hidden;
+          padding: 40px;
           display: flex;
           flex-direction: column;
+          justify-content: center;
+          align-items: center;
           background-image: 
             radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%),
             radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.05), transparent 25%);
@@ -387,11 +391,11 @@ export default function LoginPage() {
           position: relative;
           z-index: 1;
           max-width: 1200px;
-          margin: 0 auto;
           width: 100%;
           display: flex;
           flex-direction: column;
-          gap: 60px;
+          gap: 40px;
+          transform: scale(0.9);
         }
 
         /* Top Header Area */
@@ -670,7 +674,7 @@ export default function LoginPage() {
 
         /* How AI Works Section */
         .how-ai-works {
-          margin-top: 200px; /* Space for absolute mockup */
+          margin-top: 140px; /* Reduced space */
         }
         .section-title {
           font-size: 16px;
