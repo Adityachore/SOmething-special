@@ -131,7 +131,9 @@ async def list_departments(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    _require_org_admin(user)
+    # Allow HR/Admin in addition to ORG_ADMIN since the employee form needs department list
+    if user.role not in (UserRole.ORG_ADMIN, UserRole.ADMIN, UserRole.HR):
+        raise ForbiddenError("Organization Admin or HR access required.")
     result = await db.execute(
         select(Department)
         .where(Department.tenant_id == user.tenant_id)

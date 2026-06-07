@@ -295,8 +295,7 @@ export default function AdminUsers() {
     }
   };
 
-  // Unique departments for filter
-  const departmentsList = Array.from(new Set(employees.map(e => e.department).filter(Boolean)));
+
 
   return (
     <DashboardLayout title="Employee Database">
@@ -316,7 +315,7 @@ export default function AdminUsers() {
         
         <select className="select" value={deptFilter} onChange={e => setDeptFilter(e.target.value)} style={{ minWidth: 150 }}>
           <option value="">All Departments</option>
-          {departmentsList.map((d: any) => <option key={d} value={d}>{d}</option>)}
+          {depts.map((d: any) => <option key={d.id} value={d.name}>{d.name}</option>)}
         </select>
 
         <select className="select" value={statusFilter} onChange={e => setStatusFilter(e.target.value)} style={{ minWidth: 120 }}>
