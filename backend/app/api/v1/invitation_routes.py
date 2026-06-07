@@ -120,8 +120,16 @@ async def accept_invitation(
         select(User).where(func.lower(User.email) == func.lower(inv.email), User.deleted_at.is_(None))
     )
     user = user_res.scalar_one_or_none()
-    
     hashed_pwd = hash_password(payload.password)
+    
+    # Auto-grant capabilities based on role
+    can_eval = inv.role in ("HR", "CMD", "ORG_ADMIN", "SUPER_ADMIN")
+    can_inv = inv.role in ("HR", "ORG_ADMIN", "SUPER_ADMIN")
+    can_appr = inv.role in ("CMD", "ORG_ADMIN", "SUPER_ADMIN")
+    can_assg = inv.role in ("HR", "ORG_ADMIN", "SUPER_ADMIN")
+    can_resl = inv.role in ("HR", "ORG_ADMIN", "SUPER_ADMIN")
+    can_view_hr = inv.role in ("HR", "ORG_ADMIN", "SUPER_ADMIN")
+    
     if user:
         if user.tenant_id != inv.tenant_id:
             raise HTTPException(status_code=400, detail="User with this email is already registered in another organization.")
@@ -133,6 +141,14 @@ async def accept_invitation(
             dept_res = await db.execute(select(Department.name).where(Department.id == inv.department_id))
             user.department = dept_res.scalar_one_or_none()
         user.status = "Active"
+        
+        # Update capabilities
+        user.can_evaluate = can_eval
+        user.can_investigate = can_inv
+        user.can_approve_resolution = can_appr
+        user.can_assign_complaints = can_assg
+        user.can_resolve_complaints = can_resl
+        user.can_view_hr_sensitive = can_view_hr
     else:
         # Get department name for backwards compatibility text field
         dept_name = None
@@ -150,6 +166,12 @@ async def accept_invitation(
             department=dept_name,
             status="Active",
             email_verified=True,
+            can_evaluate=can_eval,
+            can_investigate=can_inv,
+            can_approve_resolution=can_appr,
+            can_assign_complaints=can_assg,
+            can_resolve_complaints=can_resl,
+            can_view_hr_sensitive=can_view_hr,
         )
         db.add(user)
         await db.flush()

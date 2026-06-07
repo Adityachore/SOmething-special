@@ -33,10 +33,17 @@ TRANSITIONS = {
         ComplaintStatus.WITHDRAWN,
         ComplaintStatus.EXPIRED,
         ComplaintStatus.WAITING_FOR_EMPLOYEE,
+        ComplaintStatus.RESOLUTION_PROPOSED,
     ],
     ComplaintStatus.WAITING_FOR_EMPLOYEE: [
         ComplaintStatus.IN_PROGRESS,
         ComplaintStatus.SOLVED,
+        ComplaintStatus.REJECTED,
+        ComplaintStatus.RESOLUTION_PROPOSED,
+    ],
+    ComplaintStatus.RESOLUTION_PROPOSED: [
+        ComplaintStatus.SOLVED,
+        ComplaintStatus.IN_PROGRESS,
         ComplaintStatus.REJECTED,
     ],
     ComplaintStatus.SOLVED: [ComplaintStatus.IN_PROGRESS, ComplaintStatus.CLOSED],
@@ -372,6 +379,44 @@ class ComplaintService:
         )
         await db.commit()
         await ComplaintService._notify(db, complaint, user, "resolved")
+        return await ComplaintService._get_with_relations(db, complaint.id, user.tenant_id)
+
+    # ── Propose Resolution ────────────────────────────────────────────────────
+
+    @staticmethod
+    async def propose_resolution(
+        db: AsyncSession, user: User, complaint_id: str,
+        resolution_note: str, root_cause: str | None, visible_to_employee: bool
+    ) -> Complaint:
+        complaint = await ComplaintService._get_with_relations(db, complaint_id, user.tenant_id)
+        assert_can_handle_complaint(user, complaint)
+        _assert_valid_transition(complaint.status, ComplaintStatus.RESOLUTION_PROPOSED)
+
+        old_status = complaint.status
+        complaint.status = ComplaintStatus.RESOLUTION_PROPOSED
+
+        # Temporarily store the proposed resolution details in an internal note or directly if we use the ResolutionDetail
+        # Actually, let's just create the ResolutionDetail and the Reviewer can modify it if needed, or we can just save it.
+        # But ResolutionDetail indicates it's resolved. Let's just create an internal note with the proposal for simplicity, 
+        # or we can save it to ResolutionDetail and if rejected, we delete it? 
+        # Better: create an internal note.
+        note_content = f"PROPOSED RESOLUTION:\nRoot Cause: {root_cause or 'N/A'}\nResolution: {resolution_note}"
+        
+        note = InternalNote(
+            complaint_id=complaint.id,
+            author_user_id=user.id,
+            role_at_time=user.role.value,
+            content=note_content,
+            is_visible_to_employee=False,
+        )
+        db.add(note)
+
+        await ComplaintService._log_audit(
+            db, complaint.id, user.id, AuditActionType.STATUS_CHANGE,
+            old_val={"status": old_status.value}, new_val={"status": ComplaintStatus.RESOLUTION_PROPOSED.value}
+        )
+        await db.commit()
+        await ComplaintService._notify(db, complaint, user, "resolution_proposed")
         return await ComplaintService._get_with_relations(db, complaint.id, user.tenant_id)
 
     # ── Reject ────────────────────────────────────────────────────────────────

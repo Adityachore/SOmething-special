@@ -195,7 +195,22 @@ async def start_complaint(
     return _resp(await ComplaintService.start(db, user, complaint_id), user)
 
 
-# ─── Handler: Resolve ────────────────────────────────────────────────────────
+# ─── Handler: Propose Resolution ──────────────────────────────────────────────
+
+@router.post("/{complaint_id}/propose-resolution", response_model=ComplaintResponse)
+async def propose_resolution_complaint(
+    complaint_id: str,
+    payload: ResolvePayload,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    return _resp(await ComplaintService.propose_resolution(
+        db, user, complaint_id,
+        payload.resolution_note, payload.root_cause, payload.visible_to_employee
+    ), user)
+
+
+# ─── Handler: Resolve (Approve) ──────────────────────────────────────────────
 
 @router.post("/{complaint_id}/resolve", response_model=ComplaintResponse)
 async def resolve_complaint(

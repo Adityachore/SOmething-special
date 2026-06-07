@@ -1,44 +1,74 @@
-'use client';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth-context';
-import { Shield, Eye, EyeOff, Zap, Mail, Lock, Bot, Sparkles, ChevronRight } from 'lucide-react';
+"use client";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import {
+  Shield,
+  Eye,
+  EyeOff,
+  Zap,
+  Mail,
+  Lock,
+  ChevronRight,
+  Search,
+  Bell,
+  LayoutDashboard,
+  FileText,
+  FilePlus,
+  BarChart2,
+  BellRing,
+  BookOpen,
+  Settings,
+  MoreVertical,
+  User,
+  BrainCircuit,
+  FolderOpen,
+  CheckCircle2,
+  Users,
+  Building,
+  Bot
+} from "lucide-react";
 
 export default function LoginPage() {
   const { user, loading: authLoading, login } = useAuth();
   const router = useRouter();
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!authLoading && user) {
-      router.replace('/');
+      router.replace("/");
     }
   }, [user, authLoading, router]);
 
   const quickLogin = (role: string) => {
     const map: Record<string, [string, string]> = {
-      admin:    ['admin@demo.com',    'Admin@1234'],
-      hr:       ['hr@demo.com',       'Hr@1234'],
-      cmd:      ['cmd@demo.com',      'Cmd@1234'],
-      employee: ['employee@demo.com', 'Emp@1234'],
+      admin: ["admin@demo.com", "Admin@1234"],
+      hr: ["hr@demo.com", "Hr@1234"],
+      cmd: ["cmd@demo.com", "Cmd@1234"],
+      employee: ["employee@demo.com", "Emp@1234"],
     };
-    setEmail(map[role][0]); setPassword(map[role][1]);
+    setEmail(map[role][0]);
+    setPassword(map[role][1]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); setError('');
+    setLoading(true);
+    setError("");
     try {
       await login(email, password);
-      router.push('/');
+      router.push("/");
     } catch (err: any) {
-      const msg = err.response?.data?.message || err.response?.data?.detail || 'Invalid email or password.';
+      const msg =
+        err.response?.data?.message ||
+        err.response?.data?.detail ||
+        "Invalid email or password.";
       setError(msg);
     } finally {
       setLoading(false);
@@ -47,7 +77,15 @@ export default function LoginPage() {
 
   if (authLoading || user) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#050a18' }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          height: "100vh",
+          background: "#050a18",
+        }}
+      >
         <div className="spinner" />
       </div>
     );
@@ -56,111 +94,98 @@ export default function LoginPage() {
   return (
     <>
       <style>{`
+        :root {
+          --primary-bg: #030712;
+          --panel-bg: #0b1120;
+          --border-color: rgba(59, 130, 246, 0.1);
+          --text-primary: #f8fafc;
+          --text-secondary: #94a3b8;
+          --accent-blue: #3b82f6;
+          --accent-green: #10b981;
+        }
+
         .login-page {
           display: flex;
           height: 100vh;
           width: 100vw;
           overflow: hidden;
-          background: #050a18;
+          background: var(--primary-bg);
+          font-family: 'Inter', system-ui, -apple-system, sans-serif;
         }
 
         /* ─── Left Panel ─── */
         .login-left {
-          width: 480px;
-          min-width: 420px;
+          width: 440px;
+          min-width: 400px;
           height: 100vh;
           overflow-y: auto;
           display: flex;
           flex-direction: column;
           justify-content: center;
-          padding: 48px 52px;
-          background: #0a0e1a;
-          border-right: 1px solid rgba(59, 130, 246, 0.08);
+          padding: 48px;
+          background: var(--panel-bg);
+          border-right: 1px solid var(--border-color);
           position: relative;
-          z-index: 2;
-        }
-
-        .login-left::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #3b82f6, #06b6d4, #10b981);
+          z-index: 10;
         }
 
         .login-logo {
           display: flex;
           align-items: center;
-          gap: 14px;
-          margin-bottom: 10px;
+          gap: 12px;
+          margin-bottom: 8px;
         }
 
         .login-logo-icon {
-          width: 52px;
-          height: 52px;
-          border-radius: 16px;
+          width: 42px;
+          height: 42px;
+          border-radius: 12px;
           background: linear-gradient(135deg, #1e40af, #3b82f6);
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
-          position: relative;
-        }
-
-        .login-logo-icon::after {
-          content: '';
-          position: absolute;
-          inset: -2px;
-          border-radius: 18px;
-          background: linear-gradient(135deg, #3b82f6, #06b6d4);
-          z-index: -1;
-          opacity: 0.4;
-          filter: blur(8px);
+          box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
         }
 
         .login-logo-text {
-          font-family: var(--font-outfit), 'Outfit', sans-serif;
-          font-size: 28px;
-          font-weight: 800;
-          background: linear-gradient(135deg, #60a5fa, #38bdf8, #34d399);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
+          font-size: 26px;
+          font-weight: 700;
+          color: white;
           letter-spacing: -0.02em;
         }
 
+        .login-logo-text span {
+          color: #38bdf8;
+        }
+
         .login-subtitle {
-          font-size: 15px;
-          font-weight: 500;
-          color: #94a3b8;
+          font-size: 16px;
+          font-weight: 600;
+          color: var(--text-primary);
           margin-bottom: 6px;
-          letter-spacing: 0.01em;
         }
 
         .login-tagline {
           font-size: 13px;
-          color: #475569;
+          color: var(--text-secondary);
           margin-bottom: 40px;
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
         }
 
         .login-tagline span {
           color: #3b82f6;
+          font-weight: 500;
         }
 
-        /* Form Fields */
         .login-field {
-          margin-bottom: 22px;
-          position: relative;
+          margin-bottom: 24px;
         }
 
         .login-field label {
           display: block;
-          font-size: 12.5px;
+          font-size: 11px;
           font-weight: 600;
           color: #64748b;
           margin-bottom: 8px;
@@ -177,38 +202,25 @@ export default function LoginPage() {
         .login-input-icon {
           position: absolute;
           left: 14px;
-          color: #475569;
-          z-index: 1;
+          color: #64748b;
           pointer-events: none;
-          transition: color 0.2s;
         }
 
         .login-input {
           width: 100%;
-          padding: 12px 14px 12px 44px;
-          background: rgba(15, 23, 42, 0.8);
-          border: 1px solid rgba(59, 130, 246, 0.12);
-          border-radius: 12px;
-          color: #e2e8f0;
+          padding: 14px 14px 14px 44px;
+          background: rgba(15, 23, 42, 0.4);
+          border: 1px solid rgba(255, 255, 255, 0.08);
+          border-radius: 10px;
+          color: var(--text-primary);
           font-size: 14px;
           outline: none;
           transition: all 0.2s ease;
-          font-family: inherit;
         }
 
         .login-input:focus {
           border-color: rgba(59, 130, 246, 0.5);
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08), 0 4px 16px rgba(59, 130, 246, 0.1);
-          background: rgba(15, 23, 42, 1);
-        }
-
-        .login-input:focus ~ .login-input-icon,
-        .login-input-wrap:focus-within .login-input-icon {
-          color: #3b82f6;
-        }
-
-        .login-input::placeholder {
-          color: #334155;
+          background: rgba(15, 23, 42, 0.8);
         }
 
         .login-pass-toggle {
@@ -216,20 +228,10 @@ export default function LoginPage() {
           right: 14px;
           background: none;
           border: none;
-          color: #475569;
+          color: #64748b;
           cursor: pointer;
-          padding: 4px;
-          display: flex;
-          align-items: center;
-          transition: color 0.15s;
-          z-index: 1;
         }
 
-        .login-pass-toggle:hover {
-          color: #94a3b8;
-        }
-
-        /* Remember / Forgot row */
         .login-options {
           display: flex;
           justify-content: space-between;
@@ -245,549 +247,545 @@ export default function LoginPage() {
         }
 
         .login-remember-box {
-          width: 18px;
-          height: 18px;
-          border-radius: 5px;
-          border: 1.5px solid rgba(59, 130, 246, 0.25);
-          background: rgba(15, 23, 42, 0.5);
+          width: 16px;
+          height: 16px;
+          border-radius: 4px;
+          border: 1px solid rgba(255,255,255,0.2);
+          background: transparent;
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
-          transition: all 0.15s;
-          flex-shrink: 0;
         }
 
         .login-remember-box.checked {
-          background: linear-gradient(135deg, #1e40af, #3b82f6);
+          background: #3b82f6;
           border-color: #3b82f6;
         }
 
         .login-remember-text {
           font-size: 13px;
-          color: #94a3b8;
+          color: var(--text-secondary);
         }
 
         .login-forgot {
-          font-size: 12.5px;
+          font-size: 13px;
           color: #3b82f6;
           text-decoration: none;
-          font-weight: 500;
-          transition: color 0.15s;
         }
 
-        .login-forgot:hover {
-          color: #60a5fa;
-          text-decoration: underline;
-        }
-
-        /* Submit Button */
         .login-btn {
           width: 100%;
-          padding: 13px 24px;
+          padding: 14px;
           border: none;
-          border-radius: 12px;
-          background: linear-gradient(135deg, #059669, #10b981, #34d399);
+          border-radius: 10px;
+          background: linear-gradient(90deg, #10b981, #34d399);
           color: #fff;
           font-size: 15px;
-          font-weight: 700;
+          font-weight: 600;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 20px rgba(16, 185, 129, 0.3);
-          font-family: inherit;
-          letter-spacing: 0.01em;
-          position: relative;
-          overflow: hidden;
+          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.2);
         }
 
-        .login-btn::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, transparent, rgba(255,255,255,0.1), transparent);
-          transform: translateX(-100%);
-          transition: transform 0.5s ease;
-        }
-
-        .login-btn:hover::before {
-          transform: translateX(100%);
-        }
-
-        .login-btn:hover:not(:disabled) {
-          transform: translateY(-2px);
-          box-shadow: 0 8px 32px rgba(16, 185, 129, 0.4);
-        }
-
-        .login-btn:active:not(:disabled) {
-          transform: translateY(0);
-        }
-
-        .login-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
-        }
-
-        .login-btn-spinner {
-          width: 20px;
-          height: 20px;
-          border: 2.5px solid rgba(255,255,255,0.3);
-          border-top-color: white;
-          border-radius: 50%;
-          animation: spin 0.7s linear infinite;
-        }
-
-        /* Quick Demo */
         .login-demo-divider {
           display: flex;
           align-items: center;
           gap: 12px;
-          margin: 28px 0 18px;
+          margin: 32px 0 20px;
         }
-
         .login-demo-divider::before,
         .login-demo-divider::after {
           content: '';
           flex: 1;
           height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.15), transparent);
+          background: rgba(255,255,255,0.05);
         }
-
         .login-demo-label {
           font-size: 11px;
-          color: #475569;
+          color: #64748b;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
           display: flex;
           align-items: center;
-          gap: 5px;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          font-weight: 600;
-          white-space: nowrap;
+          gap: 4px;
         }
 
         .login-demo-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 8px;
+          gap: 12px;
         }
 
         .login-demo-btn {
-          padding: 9px 12px;
-          border-radius: 10px;
-          font-size: 12.5px;
-          font-weight: 600;
+          padding: 10px 12px;
+          border-radius: 8px;
+          font-size: 13px;
+          font-weight: 500;
           cursor: pointer;
-          transition: all 0.15s ease;
-          border: 1px solid;
-          font-family: inherit;
+          background: transparent;
+          border: 1px solid rgba(255,255,255,0.08);
+          color: var(--text-secondary);
           display: flex;
           align-items: center;
-          gap: 6px;
+          gap: 8px;
+          transition: all 0.2s;
         }
-
         .login-demo-btn:hover {
-          transform: translateY(-1px);
+          background: rgba(255,255,255,0.03);
+          color: white;
         }
 
         .login-footer {
-          margin-top: 28px;
+          margin-top: 40px;
           text-align: center;
-        }
-
-        .login-footer-link {
           font-size: 13px;
-          color: #64748b;
         }
-
+        .login-footer-link {
+          color: var(--text-secondary);
+          margin-bottom: 24px;
+        }
         .login-footer-link a {
           color: #3b82f6;
           text-decoration: none;
-          font-weight: 600;
-          margin-left: 4px;
+          margin-left: 6px;
         }
-
-        .login-footer-link a:hover {
-          text-decoration: underline;
-        }
-
         .login-copyright {
-          margin-top: 18px;
-          font-size: 11.5px;
-          color: #334155;
-          text-align: center;
+          color: #475569;
+          font-size: 12px;
         }
 
         /* ─── Right Panel ─── */
         .login-right {
           flex: 1;
-          height: 100vh;
           position: relative;
-          overflow: hidden;
+          background: linear-gradient(180deg, #020617 0%, #0f172a 100%);
+          overflow-y: auto;
+          overflow-x: hidden;
+          padding: 60px;
           display: flex;
-          align-items: center;
-          justify-content: center;
+          flex-direction: column;
+          background-image: 
+            radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.08), transparent 25%),
+            radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.05), transparent 25%);
         }
 
-        .login-right-bg {
+        /* Dotted grid overlay */
+        .login-right::before {
+          content: "";
           position: absolute;
           inset: 0;
-          background: linear-gradient(135deg, #0c1a3a 0%, #0f2460 25%, #1a3a7a 50%, #0d2b5e 75%, #081830 100%);
+          background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+          background-size: 24px 24px;
+          z-index: 0;
+          pointer-events: none;
         }
 
-        .login-right-bg::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: radial-gradient(ellipse at 30% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 60%),
-                      radial-gradient(ellipse at 70% 80%, rgba(6, 182, 212, 0.12) 0%, transparent 50%),
-                      radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
-        }
-
-        /* Grid pattern */
-        .login-right-grid {
-          position: absolute;
-          inset: 0;
-          background-image:
-            linear-gradient(rgba(59, 130, 246, 0.04) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(59, 130, 246, 0.04) 1px, transparent 1px);
-          background-size: 60px 60px;
-          mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
-          -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
-        }
-
-        /* Floating orbs */
-        .login-orb {
-          position: absolute;
-          border-radius: 50%;
-          filter: blur(80px);
-          animation: float-orb 8s ease-in-out infinite;
-        }
-
-        .login-orb-1 {
-          width: 300px;
-          height: 300px;
-          background: rgba(59, 130, 246, 0.12);
-          top: 10%;
-          right: 10%;
-          animation-delay: 0s;
-        }
-
-        .login-orb-2 {
-          width: 250px;
-          height: 250px;
-          background: rgba(6, 182, 212, 0.1);
-          bottom: 15%;
-          left: 15%;
-          animation-delay: -3s;
-        }
-
-        .login-orb-3 {
-          width: 200px;
-          height: 200px;
-          background: rgba(99, 102, 241, 0.08);
-          top: 50%;
-          left: 50%;
-          animation-delay: -5s;
-        }
-
-        @keyframes float-orb {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          33% { transform: translate(20px, -30px) scale(1.05); }
-          66% { transform: translate(-15px, 20px) scale(0.95); }
-        }
-
-        /* Floating particles */
-        .login-particle {
-          position: absolute;
-          width: 4px;
-          height: 4px;
-          background: rgba(59, 130, 246, 0.5);
-          border-radius: 50%;
-          animation: float-particle linear infinite;
-        }
-
-        @keyframes float-particle {
-          0% { transform: translateY(100vh) scale(0); opacity: 0; }
-          10% { opacity: 1; transform: translateY(90vh) scale(1); }
-          90% { opacity: 0.6; }
-          100% { transform: translateY(-10vh) scale(0.5); opacity: 0; }
-        }
-
-        /* Center content */
-        .login-right-content {
+        .right-content-wrapper {
           position: relative;
-          z-index: 2;
-          text-align: center;
-          max-width: 500px;
-          padding: 40px;
-        }
-
-        /* Robot mascot container */
-        .login-robot {
-          width: 220px;
-          height: 220px;
-          margin: 0 auto 36px;
-          position: relative;
-          animation: float-robot 6s ease-in-out infinite;
-        }
-
-        @keyframes float-robot {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-18px); }
-        }
-
-        .login-robot-body {
-          width: 160px;
-          height: 160px;
+          z-index: 1;
+          max-width: 1200px;
           margin: 0 auto;
-          background: linear-gradient(180deg, #1e3a5f 0%, #0f2440 100%);
-          border-radius: 32px;
-          border: 2px solid rgba(59, 130, 246, 0.25);
-          position: relative;
-          overflow: hidden;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4), 0 0 40px rgba(59, 130, 246, 0.15);
-        }
-
-        .login-robot-body::before {
-          content: '';
-          position: absolute;
-          top: -1px;
-          left: 20%;
-          right: 20%;
-          height: 2px;
-          background: linear-gradient(90deg, transparent, #3b82f6, transparent);
-        }
-
-        /* Robot face */
-        .login-robot-face {
-          position: absolute;
-          top: 30px;
-          left: 50%;
-          transform: translateX(-50%);
+          width: 100%;
           display: flex;
-          gap: 24px;
+          flex-direction: column;
+          gap: 60px;
         }
 
-        .login-robot-eye {
-          width: 28px;
-          height: 28px;
-          border-radius: 50%;
-          background: linear-gradient(135deg, #3b82f6, #06b6d4);
-          box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), inset 0 -3px 6px rgba(0,0,0,0.3);
-          animation: blink-eye 4s ease-in-out infinite;
-          position: relative;
+        /* Top Header Area */
+        .header-content {
+          max-width: 600px;
         }
-
-        .login-robot-eye::after {
-          content: '';
-          position: absolute;
-          top: 6px;
-          left: 8px;
-          width: 8px;
-          height: 8px;
-          background: rgba(255,255,255,0.8);
-          border-radius: 50%;
-        }
-
-        @keyframes blink-eye {
-          0%, 44%, 48%, 100% { transform: scaleY(1); }
-          46% { transform: scaleY(0.1); }
-        }
-
-        .login-robot-mouth {
-          position: absolute;
-          top: 80px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 50px;
-          height: 6px;
-          border-radius: 3px;
-          background: linear-gradient(90deg, #3b82f6, #06b6d4);
-          box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
-        }
-
-        .login-robot-visor {
-          position: absolute;
-          top: 20px;
-          left: 15px;
-          right: 15px;
-          height: 50px;
-          border-radius: 25px;
-          background: rgba(59, 130, 246, 0.05);
-          border: 1px solid rgba(59, 130, 246, 0.15);
-        }
-
-        /* Robot antenna */
-        .login-robot-antenna {
-          position: absolute;
-          top: -20px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 3px;
-          height: 20px;
-          background: linear-gradient(180deg, #3b82f6, rgba(59, 130, 246, 0.3));
-        }
-
-        .login-robot-antenna::after {
-          content: '';
-          position: absolute;
-          top: -8px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 12px;
-          height: 12px;
-          background: linear-gradient(135deg, #3b82f6, #06b6d4);
-          border-radius: 50%;
-          box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
-          animation: pulse-antenna 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-antenna {
-          0%, 100% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.6); }
-          50% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.9), 0 0 60px rgba(59, 130, 246, 0.3); }
-        }
-
-        /* Shield overlay on robot */
-        .login-robot-shield {
-          position: absolute;
-          bottom: 25px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 40px;
-          height: 40px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: rgba(59, 130, 246, 0.6);
-        }
-
-        /* Orbiting rings */
-        .login-orbit {
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          border: 1px solid rgba(59, 130, 246, 0.1);
-          border-radius: 50%;
-          animation: orbit 12s linear infinite;
-        }
-
-        .login-orbit-1 {
-          width: 200px;
-          height: 200px;
-        }
-
-        .login-orbit-2 {
-          width: 260px;
-          height: 260px;
-          animation-direction: reverse;
-          animation-duration: 18s;
-          border-style: dashed;
-        }
-
-        .login-orbit-dot {
-          position: absolute;
-          width: 8px;
-          height: 8px;
-          background: #3b82f6;
-          border-radius: 50%;
-          box-shadow: 0 0 12px rgba(59, 130, 246, 0.6);
-        }
-
-        .login-orbit-1 .login-orbit-dot { top: -4px; left: 50%; }
-        .login-orbit-2 .login-orbit-dot { bottom: -4px; right: 20%; }
-
-        @keyframes orbit {
-          from { transform: translate(-50%, -50%) rotate(0deg); }
-          to { transform: translate(-50%, -50%) rotate(360deg); }
-        }
-
-        .login-right-title {
-          font-family: var(--font-outfit), 'Outfit', sans-serif;
-          font-size: 28px;
+        .header-title {
+          font-size: 32px;
           font-weight: 700;
-          color: #f1f5f9;
+          color: white;
           margin-bottom: 12px;
-          letter-spacing: -0.01em;
         }
-
-        .login-right-title span {
-          background: linear-gradient(135deg, #3b82f6, #06b6d4);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .login-right-desc {
-          font-size: 15px;
-          color: #94a3b8;
-          line-height: 1.6;
-          max-width: 380px;
-          margin: 0 auto;
-        }
-
-        /* Features pills */
-        .login-features {
-          display: flex;
-          gap: 10px;
-          justify-content: center;
-          margin-top: 28px;
-          flex-wrap: wrap;
-        }
-
-        .login-feature-pill {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 16px;
-          background: rgba(59, 130, 246, 0.08);
-          border: 1px solid rgba(59, 130, 246, 0.15);
-          border-radius: 999px;
-          font-size: 12px;
+        .header-subtitle {
+          font-size: 14px;
           font-weight: 500;
-          color: #94a3b8;
-          backdrop-filter: blur(10px);
-        }
-
-        .login-feature-pill svg {
-          color: #3b82f6;
-        }
-
-        /* Error styling */
-        .login-error {
-          background: rgba(239, 68, 68, 0.08);
-          border: 1px solid rgba(239, 68, 68, 0.2);
-          border-radius: 10px;
-          padding: 11px 14px;
-          margin-bottom: 18px;
-          font-size: 13px;
-          color: #f87171;
+          color: #60a5fa;
+          margin-bottom: 16px;
           display: flex;
           align-items: center;
           gap: 8px;
         }
+        .header-subtitle span {
+          color: #60a5fa;
+        }
+        .header-subtitle .dot {
+          color: #475569;
+        }
+        .header-desc {
+          font-size: 14px;
+          color: #94a3b8;
+          line-height: 1.6;
+        }
 
-        /* Responsive */
+        /* Main Top Section (Text + Dashboard Mockup) */
+        .top-section {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          position: relative;
+        }
+
+        /* Dashboard Mockup Container */
+        .mockup-container {
+          position: absolute;
+          top: -20px;
+          right: -80px;
+          width: 800px;
+          height: 520px;
+          background: #ffffff;
+          border-radius: 16px;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255,255,255,0.1);
+          display: flex;
+          overflow: hidden;
+          transform: perspective(1000px) rotateY(-5deg) scale(0.9);
+          transform-origin: right center;
+          z-index: 5;
+        }
+
+        /* Dashboard Sidebar */
+        .mockup-sidebar {
+          width: 220px;
+          background: #0f172a;
+          padding: 20px;
+          display: flex;
+          flex-direction: column;
+          border-right: 1px solid #1e293b;
+        }
+        .mockup-logo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          color: white;
+          font-weight: 600;
+          font-size: 16px;
+          margin-bottom: 30px;
+        }
+        .mockup-logo-icon {
+          width: 28px;
+          height: 28px;
+          background: linear-gradient(135deg, #2563eb, #3b82f6);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .mockup-menu-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 10px 12px;
+          border-radius: 8px;
+          color: #94a3b8;
+          font-size: 13px;
+          margin-bottom: 4px;
+        }
+        .mockup-menu-item.active {
+          background: rgba(59, 130, 246, 0.1);
+          color: #3b82f6;
+        }
+
+        /* Dashboard Main Area */
+        .mockup-main {
+          flex: 1;
+          background: #f8fafc;
+          display: flex;
+          flex-direction: column;
+        }
+        .mockup-header {
+          height: 60px;
+          background: white;
+          border-bottom: 1px solid #e2e8f0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          padding: 0 24px;
+        }
+        .mockup-search {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          background: #f1f5f9;
+          padding: 8px 16px;
+          border-radius: 20px;
+          width: 250px;
+          color: #94a3b8;
+          font-size: 12px;
+        }
+        .mockup-user {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .mockup-avatar {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: #e2e8f0;
+          overflow: hidden;
+        }
+        .mockup-user-info {
+          display: flex;
+          flex-direction: column;
+        }
+        .mockup-user-name { font-size: 12px; font-weight: 600; color: #0f172a; }
+        .mockup-user-role { font-size: 11px; color: #64748b; }
+
+        .mockup-content {
+          padding: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+          overflow-y: auto;
+        }
+
+        .mockup-stats {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+        }
+        .mockup-stat-card {
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 16px;
+        }
+        .mockup-stat-header {
+          display: flex;
+          justify-content: space-between;
+          margin-bottom: 12px;
+        }
+        .mockup-stat-title { font-size: 11px; color: #64748b; font-weight: 500; }
+        .mockup-stat-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+        .mockup-stat-value { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .mockup-stat-trend { font-size: 11px; display: flex; align-items: center; gap: 4px; }
+        .trend-up { color: #10b981; }
+        .trend-down { color: #ef4444; }
+
+        .mockup-middle {
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          gap: 16px;
+        }
+        .mockup-card {
+          background: white;
+          border: 1px solid #e2e8f0;
+          border-radius: 12px;
+          padding: 16px;
+        }
+        .mockup-card-title {
+          font-size: 13px;
+          font-weight: 600;
+          color: #0f172a;
+          margin-bottom: 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+
+        /* Fake Chart */
+        .mockup-chart-area {
+          height: 120px;
+          position: relative;
+          display: flex;
+          align-items: flex-end;
+          gap: 10%;
+          padding-top: 20px;
+        }
+        .chart-line {
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 100' preserveAspectRatio='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,80 Q40,60 80,70 T160,40 T240,60 T320,20 T400,30' fill='none' stroke='%233b82f6' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M0,80 Q40,60 80,70 T160,40 T240,60 T320,20 T400,30 L400,100 L0,100 Z' fill='rgba(59,130,246,0.1)' /%3E%3C/svg%3E");
+          background-size: 100% 100%;
+          background-repeat: no-repeat;
+          border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* Fake Pie Chart */
+        .mockup-pie-area {
+          height: 120px;
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+        .pie-circle {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          background: conic-gradient(#3b82f6 0% 40%, #10b981 40% 65%, #f59e0b 65% 85%, #ef4444 85% 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .pie-inner {
+          width: 60px;
+          height: 60px;
+          background: white;
+          border-radius: 50%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+        }
+        .pie-inner span { font-size: 14px; font-weight: 700; color: #0f172a; }
+        .pie-inner small { font-size: 9px; color: #64748b; }
+        
+        .pie-legend {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          flex: 1;
+        }
+        .legend-item {
+          display: flex;
+          justify-content: space-between;
+          font-size: 10px;
+          color: #64748b;
+        }
+        .legend-dot { width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; display: inline-block;}
+
+        /* Fake Table Row */
+        .mockup-bottom {
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          gap: 16px;
+        }
+        .mockup-table { width: 100%; border-collapse: collapse; }
+        .mockup-table th { text-align: left; font-size: 10px; color: #94a3b8; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; font-weight: 500;}
+        .mockup-table td { font-size: 11px; color: #334155; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+        
+        .mockup-badge {
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 9px;
+          font-weight: 500;
+        }
+
+        /* How AI Works Section */
+        .how-ai-works {
+          margin-top: 200px; /* Space for absolute mockup */
+        }
+        .section-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: white;
+          margin-bottom: 24px;
+        }
+        .flowchart {
+          display: flex;
+          align-items: flex-start;
+          justify-content: space-between;
+          position: relative;
+        }
+        /* Flowchart connection line */
+        .flowchart::before {
+          content: "";
+          position: absolute;
+          top: 24px;
+          left: 40px;
+          right: 40px;
+          height: 1px;
+          border-top: 1px dashed rgba(59, 130, 246, 0.4);
+          z-index: 0;
+        }
+        .flow-step {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          z-index: 1;
+          width: 110px;
+        }
+        .flow-icon-wrap {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 12px;
+          background: #0f172a;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        .flow-title {
+          font-size: 12px;
+          font-weight: 600;
+          color: #e2e8f0;
+          margin-bottom: 4px;
+        }
+        .flow-desc {
+          font-size: 10px;
+          color: #64748b;
+          line-height: 1.4;
+        }
+
+        /* Key Features Section */
+        .key-features {
+          margin-top: 40px;
+        }
+        .features-grid {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 16px;
+        }
+        .feature-card {
+          background: rgba(15, 23, 42, 0.6);
+          border: 1px solid rgba(59, 130, 246, 0.15);
+          border-radius: 12px;
+          padding: 16px;
+          display: flex;
+          align-items: flex-start;
+          gap: 12px;
+          transition: all 0.2s;
+        }
+        .feature-card:hover {
+          background: rgba(30, 58, 138, 0.2);
+          border-color: rgba(59, 130, 246, 0.4);
+        }
+        .feature-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 8px;
+          background: rgba(59, 130, 246, 0.1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #3b82f6;
+          flex-shrink: 0;
+        }
+        .feature-text h4 {
+          font-size: 12px;
+          font-weight: 600;
+          color: white;
+          margin: 0 0 4px 0;
+        }
+        .feature-text p {
+          font-size: 10px;
+          color: #64748b;
+          margin: 0;
+          line-height: 1.4;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 1200px) {
+          .mockup-container {
+            right: -200px;
+          }
+        }
         @media (max-width: 1024px) {
           .login-right { display: none; }
           .login-left {
             width: 100%;
             min-width: unset;
-            max-width: 100%;
             border-right: none;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .login-left {
-            padding: 32px 24px;
-          }
-          .login-demo-grid {
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
+            padding: 24px;
           }
         }
       `}</style>
@@ -795,12 +793,11 @@ export default function LoginPage() {
       <div className="login-page">
         {/* ─── LEFT: Form Panel ─── */}
         <div className="login-left">
-          {/* Logo & Branding */}
           <div className="login-logo">
             <div className="login-logo-icon">
-              <Shield size={24} color="white" strokeWidth={2.5} />
+              <Shield size={22} color="white" strokeWidth={2.5} />
             </div>
-            <span className="login-logo-text">AI CM</span>
+            <span className="login-logo-text">AI <span>CM</span></span>
           </div>
 
           <div className="login-subtitle">AI Complaint Management System</div>
@@ -808,7 +805,6 @@ export default function LoginPage() {
             <span>Smart</span> • <span>Secure</span> • <span>Solution</span>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit}>
             <div className="login-field">
               <label>Employee ID / Email</label>
@@ -817,11 +813,10 @@ export default function LoginPage() {
                 <input
                   className="login-input"
                   type="email"
-                  placeholder="Enter your email address"
+                  placeholder="adityachore20@gmail.com"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoComplete="email"
                 />
               </div>
             </div>
@@ -832,12 +827,11 @@ export default function LoginPage() {
                 <Lock size={16} className="login-input-icon" />
                 <input
                   className="login-input"
-                  type={showPass ? 'text' : 'password'}
-                  placeholder="Enter your password"
+                  type={showPass ? "text" : "password"}
+                  placeholder="••••••••••••"
                   value={password}
-                  onChange={e => setPassword(e.target.value)}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
-                  autoComplete="current-password"
                   style={{ paddingRight: 48 }}
                 />
                 <button
@@ -845,156 +839,322 @@ export default function LoginPage() {
                   onClick={() => setShowPass(!showPass)}
                   className="login-pass-toggle"
                 >
-                  {showPass ? <EyeOff size={17} /> : <Eye size={17} />}
+                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
 
             <div className="login-options">
               <label className="login-remember" onClick={() => setRememberMe(!rememberMe)}>
-                <div className={`login-remember-box ${rememberMe ? 'checked' : ''}`}>
-                  {rememberMe && (
-                    <svg width="11" height="9" viewBox="0 0 11 9" fill="none">
-                      <path d="M1 4L4 7L10 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  )}
+                <div className={`login-remember-box ${rememberMe ? "checked" : ""}`}>
+                  {rememberMe && <CheckCircle2 size={12} color="white" />}
                 </div>
                 <span className="login-remember-text">Remember Me</span>
               </label>
-              <a href="/login/forgot" className="login-forgot">Forgot Password?</a>
+              <a href="/login/forgot" className="login-forgot">
+                Forgot Password?
+              </a>
             </div>
 
             {error && (
-              <div className="login-error">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <circle cx="8" cy="8" r="7" stroke="#f87171" strokeWidth="1.5"/>
-                  <path d="M8 5v3M8 10.5v.5" stroke="#f87171" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                {error}
-              </div>
+              <div style={{ color: "#ef4444", fontSize: 13, marginBottom: 16 }}>{error}</div>
             )}
 
             <button type="submit" className="login-btn" disabled={loading}>
-              {loading ? (
-                <div className="login-btn-spinner" />
-              ) : (
-                <>Login <ChevronRight size={18} /></>
-              )}
+              {loading ? "Logging in..." : "Login"} <ChevronRight size={18} />
             </button>
           </form>
 
-          {/* Quick Demo Login */}
           <div className="login-demo-divider">
             <span className="login-demo-label">
-              <Zap size={12} /> Quick Demo
+              <Zap size={12} color="#f59e0b" /> QUICK DEMO
             </span>
           </div>
 
           <div className="login-demo-grid">
-            {[
-              { role: 'admin',    label: 'Admin',      color: '#f59e0b', bg: 'rgba(245,158,11,0.06)', border: 'rgba(245,158,11,0.18)' },
-              { role: 'hr',       label: 'HR Manager',  color: '#06b6d4', bg: 'rgba(6,182,212,0.06)',  border: 'rgba(6,182,212,0.18)'  },
-              { role: 'cmd',      label: 'CMD',          color: '#3b82f6', bg: 'rgba(59,130,246,0.06)', border: 'rgba(59,130,246,0.18)' },
-              { role: 'employee', label: 'Employee',    color: '#10b981', bg: 'rgba(16,185,129,0.06)', border: 'rgba(16,185,129,0.18)' },
-            ].map(({ role, label, color, bg, border }) => (
-              <button
-                key={role}
-                onClick={() => quickLogin(role)}
-                className="login-demo-btn"
-                style={{ background: bg, color, borderColor: border }}
-              >
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
-                {label}
-              </button>
-            ))}
+            <button className="login-demo-btn" onClick={() => quickLogin("admin")}>
+              <span style={{ color: "#f59e0b" }}>●</span> Admin
+            </button>
+            <button className="login-demo-btn" onClick={() => quickLogin("hr")}>
+              <span style={{ color: "#38bdf8" }}>●</span> HR Manager
+            </button>
+            <button className="login-demo-btn" onClick={() => quickLogin("cmd")}>
+              <span style={{ color: "#3b82f6" }}>●</span> CMD
+            </button>
+            <button className="login-demo-btn" onClick={() => quickLogin("employee")}>
+              <span style={{ color: "#10b981" }}>●</span> Employee
+            </button>
           </div>
 
-          {/* Footer */}
           <div className="login-footer">
             <div className="login-footer-link">
-              New organization?
-              <a href="/signup">Create Organization</a>
+              New organization? <a href="/signup">Create Organization</a>
             </div>
             <div className="login-copyright">
-              © {new Date().getFullYear()} Your Organization. All rights reserved.
+              © 2026 Your Organization. All rights reserved.
             </div>
           </div>
         </div>
 
-        {/* ─── RIGHT: Illustration Panel ─── */}
+        {/* ─── RIGHT: Presentation Panel ─── */}
         <div className="login-right">
-          <div className="login-right-bg" />
-          <div className="login-right-grid" />
-
-          {/* Floating orbs */}
-          <div className="login-orb login-orb-1" />
-          <div className="login-orb login-orb-2" />
-          <div className="login-orb login-orb-3" />
-
-          {/* Floating particles */}
-          {Array.from({ length: 20 }).map((_, i) => (
-            <div
-              key={i}
-              className="login-particle"
-              style={{
-                left: `${5 + Math.random() * 90}%`,
-                animationDuration: `${6 + Math.random() * 10}s`,
-                animationDelay: `${Math.random() * 8}s`,
-                width: `${2 + Math.random() * 4}px`,
-                height: `${2 + Math.random() * 4}px`,
-                background: ['rgba(59,130,246,0.5)', 'rgba(6,182,212,0.4)', 'rgba(99,102,241,0.4)', 'rgba(16,185,129,0.3)'][Math.floor(Math.random() * 4)],
-              }}
-            />
-          ))}
-
-          {/* Center Content */}
-          <div className="login-right-content">
-            {/* Robot Mascot */}
-            <div className="login-robot">
-              {/* Orbiting rings */}
-              <div className="login-orbit login-orbit-1">
-                <div className="login-orbit-dot" />
-              </div>
-              <div className="login-orbit login-orbit-2">
-                <div className="login-orbit-dot" />
-              </div>
-
-              {/* Robot body */}
-              <div className="login-robot-body">
-                <div className="login-robot-antenna" />
-                <div className="login-robot-visor" />
-                <div className="login-robot-face">
-                  <div className="login-robot-eye" />
-                  <div className="login-robot-eye" />
+          <div className="right-content-wrapper">
+            
+            <div className="top-section">
+              <div className="header-content">
+                <h2 className="header-title">Intelligent Complaint Management</h2>
+                <div className="header-subtitle">
+                  <span>AI-Powered</span> <span className="dot">•</span> <span>Automated</span> <span className="dot">•</span> <span>Analytics-Driven</span>
                 </div>
-                <div className="login-robot-mouth" />
-                <div className="login-robot-shield">
-                  <Shield size={28} />
+                <p className="header-desc">
+                  Experience the next generation of complaint management with AI-driven classification, smart routing, and real-time analytics.
+                </p>
+              </div>
+
+              {/* DASHBOARD MOCKUP */}
+              <div className="mockup-container">
+                <div className="mockup-sidebar">
+                  <div className="mockup-logo">
+                    <div className="mockup-logo-icon"><Shield size={16} color="white"/></div>
+                    AI CM
+                  </div>
+                  <div className="mockup-menu-item active"><LayoutDashboard size={14} /> Dashboard</div>
+                  <div className="mockup-menu-item"><FilePlus size={14} /> Raise Complaint</div>
+                  <div className="mockup-menu-item"><FileText size={14} /> My Complaints</div>
+                  <div className="mockup-menu-item"><FolderOpen size={14} /> All Complaints</div>
+                  <div className="mockup-menu-item"><BarChart2 size={14} /> Reports & Analytics</div>
+                  <div className="mockup-menu-item"><BellRing size={14} /> Notifications <span style={{background:'#3b82f6', color:'white', fontSize:10, padding:'2px 6px', borderRadius:10, marginLeft:'auto'}}>9</span></div>
+                  <div className="mockup-menu-item"><BookOpen size={14} /> Knowledge Base</div>
+                  <div className="mockup-menu-item" style={{marginTop: 'auto'}}><Settings size={14} /> Settings</div>
+                </div>
+
+                <div className="mockup-main">
+                  <div className="mockup-header">
+                    <div className="mockup-search">
+                      <Search size={14} /> Search (Ctrl + /)
+                    </div>
+                    <div className="mockup-user">
+                      <div style={{position:'relative'}}>
+                        <Bell size={16} color="#64748b"/>
+                        <div style={{position:'absolute', top:-2, right:-2, width:6, height:6, background:'#ef4444', borderRadius:'50%'}} />
+                      </div>
+                      <div className="mockup-avatar"></div>
+                      <div className="mockup-user-info">
+                        <span className="mockup-user-name">Rahul Sharma</span>
+                        <span className="mockup-user-role">HR Manager</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mockup-content">
+                    <div className="mockup-stats">
+                      <div className="mockup-stat-card">
+                        <div className="mockup-stat-header">
+                          <span className="mockup-stat-title">Total Complaints</span>
+                          <div className="mockup-stat-icon" style={{background:'rgba(59,130,246,0.1)', color:'#3b82f6'}}><FileText size={12}/></div>
+                        </div>
+                        <div className="mockup-stat-value">1,245</div>
+                        <div className="mockup-stat-trend trend-up">↑ +12.5% <span style={{color:'#94a3b8', marginLeft:4}}>vs last month</span></div>
+                      </div>
+                      <div className="mockup-stat-card">
+                        <div className="mockup-stat-header">
+                          <span className="mockup-stat-title">Open Complaints</span>
+                          <div className="mockup-stat-icon" style={{background:'rgba(245,158,11,0.1)', color:'#f59e0b'}}><FolderOpen size={12}/></div>
+                        </div>
+                        <div className="mockup-stat-value">342</div>
+                        <div className="mockup-stat-trend trend-up">↑ +8.2% <span style={{color:'#94a3b8', marginLeft:4}}>vs last month</span></div>
+                      </div>
+                      <div className="mockup-stat-card">
+                        <div className="mockup-stat-header">
+                          <span className="mockup-stat-title">Under Investigation</span>
+                          <div className="mockup-stat-icon" style={{background:'rgba(168,85,247,0.1)', color:'#a855f7'}}><Search size={12}/></div>
+                        </div>
+                        <div className="mockup-stat-value">123</div>
+                        <div className="mockup-stat-trend trend-down">↓ -5.4% <span style={{color:'#94a3b8', marginLeft:4}}>vs last month</span></div>
+                      </div>
+                      <div className="mockup-stat-card">
+                        <div className="mockup-stat-header">
+                          <span className="mockup-stat-title">Resolved</span>
+                          <div className="mockup-stat-icon" style={{background:'rgba(16,185,129,0.1)', color:'#10b981'}}><CheckCircle2 size={12}/></div>
+                        </div>
+                        <div className="mockup-stat-value">980</div>
+                        <div className="mockup-stat-trend trend-up">↑ +15.7% <span style={{color:'#94a3b8', marginLeft:4}}>vs last month</span></div>
+                      </div>
+                    </div>
+
+                    <div className="mockup-middle">
+                      <div className="mockup-card">
+                        <div className="mockup-card-title">
+                          Complaint Analytics
+                          <div style={{fontSize:10, color:'#64748b', display:'flex', alignItems:'center', gap:4, border:'1px solid #e2e8f0', padding:'4px 8px', borderRadius:6}}>Last 6 Months v</div>
+                        </div>
+                        <div className="mockup-chart-area">
+                          <div className="chart-line"></div>
+                        </div>
+                      </div>
+                      <div className="mockup-card">
+                        <div className="mockup-card-title">AI Classification (This Month)</div>
+                        <div className="mockup-pie-area">
+                          <div className="pie-circle">
+                            <div className="pie-inner">
+                              <span>94%</span>
+                              <small>Accuracy</small>
+                            </div>
+                          </div>
+                          <div className="pie-legend">
+                            <div className="legend-item"><span style={{display:'flex', alignItems:'center'}}><span className="legend-dot" style={{background:'#3b82f6'}}></span> HR Related</span> <span>420</span></div>
+                            <div className="legend-item"><span style={{display:'flex', alignItems:'center'}}><span className="legend-dot" style={{background:'#10b981'}}></span> IT Related</span> <span>310</span></div>
+                            <div className="legend-item"><span style={{display:'flex', alignItems:'center'}}><span className="legend-dot" style={{background:'#f59e0b'}}></span> Payroll</span> <span>210</span></div>
+                            <div className="legend-item"><span style={{display:'flex', alignItems:'center'}}><span className="legend-dot" style={{background:'#ef4444'}}></span> Workplace</span> <span>180</span></div>
+                            <div className="legend-item"><span style={{display:'flex', alignItems:'center'}}><span className="legend-dot" style={{background:'#94a3b8'}}></span> Others</span> <span>125</span></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mockup-bottom">
+                      <div className="mockup-card">
+                        <div className="mockup-card-title">
+                          Recent Complaints
+                          <span style={{fontSize:10, color:'#3b82f6', background:'rgba(59,130,246,0.1)', padding:'2px 8px', borderRadius:4}}>View All</span>
+                        </div>
+                        <table className="mockup-table">
+                          <thead>
+                            <tr>
+                              <th>ID</th>
+                              <th>Subject</th>
+                              <th>Category (AI)</th>
+                              <th>Priority</th>
+                              <th>Status</th>
+                              <th>Date</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td>#CM-1250</td>
+                              <td>Delay in Salary</td>
+                              <td><span className="mockup-badge" style={{background:'#f1f5f9', color:'#475569'}}>Payroll</span></td>
+                              <td><span className="mockup-badge" style={{background:'rgba(239,68,68,0.1)', color:'#ef4444'}}>High</span></td>
+                              <td><span className="mockup-badge" style={{background:'rgba(245,158,11,0.1)', color:'#f59e0b'}}>Under Review</span></td>
+                              <td>20 May 2026</td>
+                            </tr>
+                            <tr>
+                              <td>#CM-1249</td>
+                              <td>Harassment Issue</td>
+                              <td><span className="mockup-badge" style={{background:'#f1f5f9', color:'#475569'}}>HR Related</span></td>
+                              <td><span className="mockup-badge" style={{background:'rgba(239,68,68,0.1)', color:'#ef4444'}}>High</span></td>
+                              <td><span className="mockup-badge" style={{background:'rgba(168,85,247,0.1)', color:'#a855f7'}}>In Progress</span></td>
+                              <td>19 May 2026</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="mockup-card">
+                        <div className="mockup-card-title">Resolution Rate</div>
+                        <div style={{display:'flex', alignItems:'center', justifyContent:'center', marginTop:10}}>
+                           <div style={{width: 100, height: 50, overflow:'hidden', position:'relative', borderBottom:'1px solid #e2e8f0'}}>
+                              <div style={{width:100, height:100, borderRadius:'50%', border:'10px solid #f1f5f9', borderTopColor:'#10b981', borderRightColor:'#10b981', transform:'rotate(-45deg)'}}></div>
+                              <div style={{position:'absolute', bottom:0, left:0, right:0, textAlign:'center', fontWeight:700, color:'#0f172a'}}>92%</div>
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
-            <h2 className="login-right-title">
-              <span>AI-Powered</span><br />
-              Smart Complaint Management
-            </h2>
-            <p className="login-right-desc">
-              Faster Resolution, Better Workplace.<br />
-              Intelligent routing, real-time analytics, and secure multi-tenant architecture.
-            </p>
-
-            {/* Feature pills */}
-            <div className="login-features">
-              <div className="login-feature-pill">
-                <Sparkles size={13} /> AI Classification
-              </div>
-              <div className="login-feature-pill">
-                <Shield size={13} /> Multi-Tenant
-              </div>
-              <div className="login-feature-pill">
-                <Bot size={13} /> Smart Routing
+            {/* How AI Works */}
+            <div className="how-ai-works">
+              <h3 className="section-title">How AI Works</h3>
+              <div className="flowchart">
+                <div className="flow-step">
+                  <div className="flow-icon-wrap" style={{borderColor:'rgba(16,185,129,0.3)', color:'#10b981'}}>
+                    <User size={20} />
+                  </div>
+                  <div className="flow-title">Submit Complaint</div>
+                  <div className="flow-desc">Employee raises a complaint</div>
+                </div>
+                <div className="flow-step">
+                  <div className="flow-icon-wrap" style={{borderColor:'rgba(59,130,246,0.3)', color:'#3b82f6'}}>
+                    <BrainCircuit size={20} />
+                  </div>
+                  <div className="flow-title">AI Analysis</div>
+                  <div className="flow-desc">AI analyzes text and content</div>
+                </div>
+                <div className="flow-step">
+                  <div className="flow-icon-wrap" style={{borderColor:'rgba(168,85,247,0.3)', color:'#a855f7'}}>
+                    <FolderOpen size={20} />
+                  </div>
+                  <div className="flow-title">Category Detection</div>
+                  <div className="flow-desc">Automatically detects category</div>
+                </div>
+                <div className="flow-step">
+                  <div className="flow-icon-wrap" style={{borderColor:'rgba(245,158,11,0.3)', color:'#f59e0b'}}>
+                    <Zap size={20} />
+                  </div>
+                  <div className="flow-title">Priority Assignment</div>
+                  <div className="flow-desc">AI assigns priority based on rules</div>
+                </div>
+                <div className="flow-step">
+                  <div className="flow-icon-wrap" style={{borderColor:'rgba(6,182,212,0.3)', color:'#06b6d4'}}>
+                    <Users size={20} />
+                  </div>
+                  <div className="flow-title">Smart Routing</div>
+                  <div className="flow-desc">Automatically routed to right investigator</div>
+                </div>
+                <div className="flow-step">
+                  <div className="flow-icon-wrap" style={{borderColor:'rgba(59,130,246,0.3)', background:'#3b82f6', color:'white'}}>
+                    <CheckCircle2 size={20} />
+                  </div>
+                  <div className="flow-title">Resolution Tracking</div>
+                  <div className="flow-desc">Track progress till resolution</div>
+                </div>
               </div>
             </div>
+
+            {/* Key Features */}
+            <div className="key-features">
+              <h3 className="section-title">Key Features</h3>
+              <div className="features-grid">
+                <div className="feature-card">
+                  <div className="feature-icon"><Bot size={16}/></div>
+                  <div className="feature-text">
+                    <h4>AI Classification</h4>
+                    <p>Smart category detection</p>
+                  </div>
+                </div>
+                <div className="feature-card">
+                  <div className="feature-icon"><Building size={16}/></div>
+                  <div className="feature-text">
+                    <h4>Multi-Tenant</h4>
+                    <p>Support for multiple organizations</p>
+                  </div>
+                </div>
+                <div className="feature-card">
+                  <div className="feature-icon"><Users size={16}/></div>
+                  <div className="feature-text">
+                    <h4>Role-Based Access</h4>
+                    <p>Granular role & permissions</p>
+                  </div>
+                </div>
+                <div className="feature-card">
+                  <div className="feature-icon"><BarChart2 size={16}/></div>
+                  <div className="feature-text">
+                    <h4>Real-Time Analytics</h4>
+                    <p>Live dashboards & insights</p>
+                  </div>
+                </div>
+                <div className="feature-card">
+                  <div className="feature-icon"><Shield size={16}/></div>
+                  <div className="feature-text">
+                    <h4>Secure & Compliant</h4>
+                    <p>Data security & privacy compliant</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
         </div>
       </div>

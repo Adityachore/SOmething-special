@@ -43,7 +43,12 @@ class User(Base):
     can_assign_complaints: Mapped[bool] = mapped_column(Boolean, default=False)
     can_resolve_complaints: Mapped[bool] = mapped_column(Boolean, default=False)
     can_view_hr_sensitive: Mapped[bool] = mapped_column(Boolean, default=False)
+    can_evaluate: Mapped[bool] = mapped_column(Boolean, default=False)
+    can_investigate: Mapped[bool] = mapped_column(Boolean, default=False)
+    can_approve_resolution: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    reporting_manager_id: Mapped[str | None] = mapped_column(String, ForeignKey("users.id"), nullable=True)
+    
     # Relationships
     tenant: Mapped["Tenant"] = relationship("Tenant", back_populates="users")
     department_rel: Mapped["Department | None"] = relationship("Department", back_populates="users", foreign_keys=[department_id])
@@ -62,6 +67,7 @@ class User(Base):
         back_populates="reviewer",
         foreign_keys="ProfileUpdateRequest.reviewed_by"
     )
+    reporting_manager: Mapped["User | None"] = relationship("User", remote_side=[id], foreign_keys=[reporting_manager_id])
 
     @property
     def tenant_name(self) -> str | None:

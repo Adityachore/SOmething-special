@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import StatCard from '@/components/StatCard';
-import { getAnalytics, getUsers, getAdminAuditLogs } from '@/lib/api';
+import { getAnalytics, getUsers, getAdminAuditLogs, getDepartments } from '@/lib/api';
 import ClientDate from '@/components/ClientDate';
 import { Users, Activity, Globe, FileText, ShieldCheck, Database, Server, Cpu, HardDrive } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from '@/lib/charts';
@@ -15,6 +15,7 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<any>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
+  const [depts, setDepts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -22,8 +23,9 @@ export default function AdminDashboard() {
       getAnalytics().catch(() => ({ data: null })),
       getUsers().catch(() => ({ data: [] })),
       getAdminAuditLogs({ page_size: 5 }).catch(() => ({ data: [] })),
-    ]).then(([ar, ur, lr]) => {
-      setAnalytics(ar.data); setUsers(ur.data); setLogs(lr.data);
+      getDepartments().catch(() => ({ data: [] })),
+    ]).then(([ar, ur, lr, dr]) => {
+      setAnalytics(ar.data); setUsers(ur.data); setLogs(lr.data); setDepts(dr.data);
     }).finally(() => setLoading(false));
   }, []);
 
@@ -45,6 +47,34 @@ export default function AdminDashboard() {
 
   return (
     <DashboardLayout title="Admin Overview">
+      {!loading && (users.length < 5 || depts.length < 2) && (
+        <div style={{ background: 'linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.02))', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 12, padding: 24, marginBottom: 24, display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: 'rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', flexShrink: 0 }}>
+            <Activity size={24}/>
+          </div>
+          <div style={{ flex: 1 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 6 }}>Welcome to AI CMP Admin!</h3>
+            <p style={{ fontSize: 13, color: '#94a3b8', lineHeight: 1.5 }}>
+              To get started, you'll need to set up your organization. 
+              {depts.length < 2 ? " First, create some departments. " : ""}
+              {users.length < 5 ? " Then, invite or create employee accounts so they can log in." : ""}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
+            {depts.length < 2 && (
+              <button className="btn btn-secondary" onClick={() => router.push('/admin/settings')}>
+                Setup Departments
+              </button>
+            )}
+            {users.length < 5 && (
+              <button className="btn btn-primary" onClick={() => router.push('/admin/users')}>
+                Add Employees
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16, marginBottom:24 }}>
         <StatCard label="Total Users" value={users.length} icon={<Users size={18}/>} color="purple"/>
         <StatCard label="Active Users" value={a.active_users_count ?? users.length} icon={<Activity size={18}/>} color="blue"/>

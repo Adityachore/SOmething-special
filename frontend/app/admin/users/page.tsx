@@ -41,12 +41,16 @@ export default function AdminUsers() {
     department: '',
     department_id: '',
     designation: '',
+    reporting_manager_id: '',
     phone: '',
     date_of_joining: '',
     status: 'Active',
     can_assign_complaints: false,
     can_resolve_complaints: false,
     can_view_hr_sensitive: false,
+    can_evaluate: false,
+    can_investigate: false,
+    can_approve_resolution: false,
   });
 
   // Search & Filter State
@@ -114,12 +118,16 @@ export default function AdminUsers() {
       department: '',
       department_id: '',
       designation: '',
+      reporting_manager_id: '',
       phone: '',
       date_of_joining: '',
       status: 'Active',
       can_assign_complaints: false,
       can_resolve_complaints: false,
       can_view_hr_sensitive: false,
+      can_evaluate: false,
+      can_investigate: false,
+      can_approve_resolution: false,
     }); 
     setError(''); 
     setSuccessMsg('');
@@ -143,12 +151,16 @@ export default function AdminUsers() {
       department: u.department || '', 
       department_id: u.department_id || '',
       designation: u.designation || '',
+      reporting_manager_id: u.reporting_manager_id || '',
       phone: u.phone || '',
       date_of_joining: formattedDoj,
       status: u.status || 'Active',
       can_assign_complaints: u.can_assign_complaints || false,
       can_resolve_complaints: u.can_resolve_complaints || false,
       can_view_hr_sensitive: u.can_view_hr_sensitive || false,
+      can_evaluate: u.can_evaluate || false,
+      can_investigate: u.can_investigate || false,
+      can_approve_resolution: u.can_approve_resolution || false,
     }); 
     setError(''); 
     setSuccessMsg('');
@@ -170,12 +182,16 @@ export default function AdminUsers() {
         department: form.department || undefined,
         department_id: form.department_id || undefined,
         designation: form.designation || undefined,
+        reporting_manager_id: form.reporting_manager_id || undefined,
         phone: form.phone || undefined,
         date_of_joining: form.date_of_joining ? `${form.date_of_joining}T00:00:00Z` : undefined,
         status: form.status,
         can_assign_complaints: form.can_assign_complaints,
         can_resolve_complaints: form.can_resolve_complaints,
         can_view_hr_sensitive: form.can_view_hr_sensitive,
+        can_evaluate: form.can_evaluate,
+        can_investigate: form.can_investigate,
+        can_approve_resolution: form.can_approve_resolution,
       }); 
       load(); 
       setModal(''); 
@@ -199,6 +215,7 @@ export default function AdminUsers() {
         department: form.department || undefined,
         department_id: form.department_id || undefined,
         designation: form.designation || undefined,
+        reporting_manager_id: form.reporting_manager_id || undefined,
         phone: form.phone || undefined,
         date_of_joining: form.date_of_joining ? `${form.date_of_joining}T00:00:00Z` : undefined,
         status: form.status,
@@ -206,6 +223,9 @@ export default function AdminUsers() {
         can_assign_complaints: form.can_assign_complaints,
         can_resolve_complaints: form.can_resolve_complaints,
         can_view_hr_sensitive: form.can_view_hr_sensitive,
+        can_evaluate: form.can_evaluate,
+        can_investigate: form.can_investigate,
+        can_approve_resolution: form.can_approve_resolution,
       }); 
       load(); 
       setModal(''); 
@@ -612,7 +632,21 @@ export default function AdminUsers() {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 18 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 13, color: '#94a3b8', marginBottom: 6 }}>Reporting Manager</label>
+                  <select
+                    className="select"
+                    value={form.reporting_manager_id}
+                    onChange={e => setForm(f => ({...f, reporting_manager_id: e.target.value}))}
+                    style={{ width: '100%', height: 38 }}
+                  >
+                    <option value="">None</option>
+                    {employees.filter(e => e.id !== editUser?.id).map(e => (
+                      <option key={e.id} value={e.id}>{e.name} ({e.email})</option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, color: '#94a3b8', marginBottom: 6 }}>Phone Number</label>
                   <input 
@@ -622,6 +656,9 @@ export default function AdminUsers() {
                     placeholder="e.g. +91 99999 88888"
                   />
                 </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 18 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, color: '#94a3b8', marginBottom: 6 }}>Date of Joining</label>
                   <input 
@@ -635,14 +672,14 @@ export default function AdminUsers() {
 
               <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 12, marginBottom: 18 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: '#94a3b8', marginBottom: 10 }}>User Capabilities & Access</div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <label className="checkbox-label">
                     <input 
                       type="checkbox" 
                       checked={form.can_assign_complaints} 
                       onChange={e => setForm(f => ({...f, can_assign_complaints: e.target.checked}))}
                     />
-                    Can assign complaints to handlers
+                    Can assign to handlers
                   </label>
                   <label className="checkbox-label">
                     <input 
@@ -650,7 +687,7 @@ export default function AdminUsers() {
                       checked={form.can_resolve_complaints} 
                       onChange={e => setForm(f => ({...f, can_resolve_complaints: e.target.checked}))}
                     />
-                    Can resolve and reject complaints
+                    Can resolve directly
                   </label>
                   <label className="checkbox-label">
                     <input 
@@ -658,7 +695,31 @@ export default function AdminUsers() {
                       checked={form.can_view_hr_sensitive} 
                       onChange={e => setForm(f => ({...f, can_view_hr_sensitive: e.target.checked}))}
                     />
-                    Can view sensitive HR cases
+                    View sensitive HR cases
+                  </label>
+                  <label className="checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      checked={form.can_evaluate} 
+                      onChange={e => setForm(f => ({...f, can_evaluate: e.target.checked}))}
+                    />
+                    Evaluator (Triage & Assign)
+                  </label>
+                  <label className="checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      checked={form.can_investigate} 
+                      onChange={e => setForm(f => ({...f, can_investigate: e.target.checked}))}
+                    />
+                    Investigator (Work on Cases)
+                  </label>
+                  <label className="checkbox-label">
+                    <input 
+                      type="checkbox" 
+                      checked={form.can_approve_resolution} 
+                      onChange={e => setForm(f => ({...f, can_approve_resolution: e.target.checked}))}
+                    />
+                    Reviewer (Approve Resol.)
                   </label>
                 </div>
               </div>

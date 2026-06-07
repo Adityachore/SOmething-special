@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/DashboardLayout';
 import { PriorityBadge, StatusBadge, HRBadge } from '@/components/Badges';
-import { getAllComplaints, startComplaint } from '@/lib/api';
+import { getAllComplaints, startComplaint, getProfile } from '@/lib/api';
 import { Eye, Play, RefreshCw, FileText } from 'lucide-react';
 
 export default function HandlerComplaints() {
@@ -12,27 +12,88 @@ export default function HandlerComplaints() {
   const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState('');
   const [filterPriority, setFilterPriority] = useState('');
+  
+  const [profile, setProfile] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>('ALL');
+
+  useEffect(() => {
+    getProfile().then(r => {
+      setProfile(r.data);
+      if (r.data.can_evaluate) setActiveTab('EVALUATOR');
+      else if (r.data.can_investigate) setActiveTab('INVESTIGATOR');
+      else if (r.data.can_approve_resolution) setActiveTab('REVIEWER');
+    }).catch(() => {});
+  }, []);
 
   const load = () => {
     setLoading(true);
-    getAllComplaints({ status: filterStatus || undefined, priority: filterPriority || undefined, page_size: 100 })
+    let statusFilter = filterStatus;
+    if (activeTab === 'EVALUATOR') statusFilter = 'PENDING';
+    if (activeTab === 'INVESTIGATOR') statusFilter = 'IN_PROGRESS';
+    if (activeTab === 'REVIEWER') statusFilter = 'RESOLUTION_PROPOSED';
+    
+    getAllComplaints({ status: statusFilter || undefined, priority: filterPriority || undefined, page_size: 100 })
       .then(r => setComplaints(r.data.items || []))
       .catch(() => {})
       .finally(() => setLoading(false));
   };
-  useEffect(load, [filterStatus, filterPriority]);
+  useEffect(load, [filterStatus, filterPriority, activeTab]);
 
   return (
     <DashboardLayout title="Complaints">
       <div className="glass" style={{ padding:24 }}>
+        
+        {/* Capability Tabs */}
+        {profile && (profile.can_evaluate || profile.can_investigate || profile.can_approve_resolution) && (
+          <div style={{ display: 'flex', gap: 10, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: 10 }}>
+            {profile.can_evaluate && (
+              <button 
+                className={`btn ${activeTab === 'EVALUATOR' ? 'btn-primary' : 'btn-secondary'}`} 
+                onClick={() => { setActiveTab('EVALUATOR'); setFilterStatus(''); }}
+              >
+                Evaluator (Pending)
+              </button>
+            )}
+            {profile.can_investigate && (
+              <button 
+                className={`btn ${activeTab === 'INVESTIGATOR' ? 'btn-primary' : 'btn-secondary'}`} 
+                onClick={() => { setActiveTab('INVESTIGATOR'); setFilterStatus(''); }}
+              >
+                Investigator (In Progress)
+              </button>
+            )}
+            {profile.can_approve_resolution && (
+              <button 
+                className={`btn ${activeTab === 'REVIEWER' ? 'btn-primary' : 'btn-secondary'}`} 
+                onClick={() => { setActiveTab('REVIEWER'); setFilterStatus(''); }}
+              >
+                Reviewer (Resolutions)
+              </button>
+            )}
+            <button 
+              className={`btn ${activeTab === 'ALL' ? 'btn-primary' : 'btn-secondary'}`} 
+              onClick={() => setActiveTab('ALL')}
+            >
+              All Complaints
+            </button>
+          </div>
+        )}
+
         <div className="section-header">
           <div>
-            <div className="section-title">All Complaints ({complaints.length})</div>
+            <div className="section-title">
+              {activeTab === 'EVALUATOR' && 'Complaints Awaiting Triage'}
+              {activeTab === 'INVESTIGATOR' && 'Active Investigations'}
+              {activeTab === 'REVIEWER' && 'Resolutions Awaiting Review'}
+              {activeTab === 'ALL' && `All Complaints (${complaints.length})`}
+            </div>
           </div>
           <div style={{ display:'flex', gap:8 }}>
-            <select className="select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ fontSize:12, height:36, width:130 }}>
-              <option value="">All Status</option><option value="PENDING">Pending</option><option value="IN_PROGRESS">In Progress</option><option value="SOLVED">Solved</option><option value="REJECTED">Rejected</option>
-            </select>
+            {activeTab === 'ALL' && (
+              <select className="select" value={filterStatus} onChange={e => setFilterStatus(e.target.value)} style={{ fontSize:12, height:36, width:130 }}>
+                <option value="">All Status</option><option value="PENDING">Pending</option><option value="IN_PROGRESS">In Progress</option><option value="RESOLUTION_PROPOSED">Resolution Proposed</option><option value="SOLVED">Solved</option><option value="REJECTED">Rejected</option>
+              </select>
+            )}
             <select className="select" value={filterPriority} onChange={e => setFilterPriority(e.target.value)} style={{ fontSize:12, height:36, width:130 }}>
               <option value="">All Priority</option><option value="CRITICAL">Critical</option><option value="HIGH">High</option><option value="MEDIUM">Medium</option><option value="LOW">Low</option>
             </select>
