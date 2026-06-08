@@ -75,7 +75,7 @@ async def get_org_setup_status(
     # Also count active invitations for heads if not yet accepted
     if not (hr_has_head and cmd_has_head):
         inv_res = await db.execute(
-            select(Invitation.role)
+            select(Invitation)
             .where(
                 Invitation.tenant_id == user.tenant_id,
                 Invitation.status == "PENDING"

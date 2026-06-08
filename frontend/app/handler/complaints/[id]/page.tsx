@@ -157,7 +157,7 @@ export default function HandlerComplaintDetail() {
 
       {/* Header */}
       <div className="glass" style={{ padding:24, marginBottom:20 }}>
-        <div style={{ display:'flex', justifyContent:'space-between', gap:16, flexWrap:'wrap' }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:16, flexWrap:'wrap' }}>
           <div style={{ flex:1, minWidth:0 }}>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8, flexWrap:'wrap' }}>
               <h2 style={{ fontSize:18, fontWeight:700, color:'#f1f5f9' }}>{c.title}</h2>
