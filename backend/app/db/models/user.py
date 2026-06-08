@@ -14,6 +14,9 @@ class UserRole(str, PyEnum):
     SUPER_ADMIN = "SUPER_ADMIN"
     ORG_ADMIN = "ORG_ADMIN"
     DEPT_HEAD = "DEPT_HEAD"
+    INVESTIGATOR = "INVESTIGATOR"
+    HANDLER = "HANDLER"
+    EVALUATOR = "EVALUATOR"
 
 
 class User(Base):

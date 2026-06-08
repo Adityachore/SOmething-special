@@ -31,6 +31,27 @@ const ROLE_MENUS: Record<string, { href: string; icon: React.ReactNode; label: s
     { href: '/handler/notifications', icon: <Bell size={16}/>, label: 'Notifications' },
     { href: '/employee/profile', icon: <Users size={16}/>, label: 'My Profile' },
   ],
+  INVESTIGATOR: [
+    { href: '/handler', icon: <LayoutDashboard size={16}/>, label: 'Dashboard' },
+    { href: '/handler/complaints', icon: <FileText size={16}/>, label: 'Cases' },
+    { href: '/handler/search', icon: <Search size={16}/>, label: 'Search' },
+    { href: '/handler/notifications', icon: <Bell size={16}/>, label: 'Notifications' },
+    { href: '/employee/profile', icon: <Users size={16}/>, label: 'My Profile' },
+  ],
+  HANDLER: [
+    { href: '/handler', icon: <LayoutDashboard size={16}/>, label: 'Dashboard' },
+    { href: '/handler/complaints', icon: <FileText size={16}/>, label: 'Cases' },
+    { href: '/handler/search', icon: <Search size={16}/>, label: 'Search' },
+    { href: '/handler/notifications', icon: <Bell size={16}/>, label: 'Notifications' },
+    { href: '/employee/profile', icon: <Users size={16}/>, label: 'My Profile' },
+  ],
+  EVALUATOR: [
+    { href: '/handler', icon: <LayoutDashboard size={16}/>, label: 'Dashboard' },
+    { href: '/handler/complaints', icon: <FileText size={16}/>, label: 'Cases' },
+    { href: '/handler/search', icon: <Search size={16}/>, label: 'Search' },
+    { href: '/handler/notifications', icon: <Bell size={16}/>, label: 'Notifications' },
+    { href: '/employee/profile', icon: <Users size={16}/>, label: 'My Profile' },
+  ],
   ADMIN: [
     { href: '/admin', icon: <LayoutDashboard size={16}/>, label: 'Overview' },
     { href: '/admin/complaints', icon: <FileText size={16}/>, label: 'All Complaints' },
@@ -57,6 +78,9 @@ const ROLE_LABEL: Record<string, { label: string; color: string }> = {
   EMPLOYEE:  { label: 'Employee', color: '#eab308' },
   CMD:       { label: 'Manager', color: '#60a5fa' },
   HR:        { label: 'HR Manager', color: '#fbbf24' },
+  INVESTIGATOR: { label: 'Investigator', color: '#8b5cf6' },
+  HANDLER:   { label: 'Handler', color: '#8b5cf6' },
+  EVALUATOR: { label: 'Evaluator', color: '#8b5cf6' },
   ADMIN:     { label: 'Administrator', color: '#f59e0b' },
   ORG_ADMIN: { label: 'Org Admin', color: '#f59e0b' },
 };
@@ -65,7 +89,7 @@ export default function Sidebar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const role = user?.role || 'EMPLOYEE';
-  const menu = ROLE_MENUS[role] || [];
+  const menu = ROLE_MENUS[role] || ROLE_MENUS.EMPLOYEE;
   const roleInfo = ROLE_LABEL[role] || ROLE_LABEL.EMPLOYEE;
 
   return (

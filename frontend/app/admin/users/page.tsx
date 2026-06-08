@@ -21,6 +21,9 @@ const ROLE_COLORS: Record<string, string> = {
   ADMIN: '#f59e0b', 
   CMD: '#3b82f6', 
   HR: '#06b6d4', 
+  INVESTIGATOR: '#8b5cf6',
+  HANDLER: '#8b5cf6',
+  EVALUATOR: '#8b5cf6',
   EMPLOYEE: '#10b981' 
 };
 
@@ -579,8 +582,24 @@ export default function AdminUsers() {
                     style={{ width: '100%' }}
                   >
                     <option value="EMPLOYEE">Employee</option>
-                    <option value="CMD">CMD Manager</option>
-                    <option value="HR">HR Manager</option>
+                    {form.department && (form.department.toLowerCase().includes('hr') || form.department.toLowerCase().includes('cmd')) && (
+                      <>
+                        <option value="HANDLER">Handler</option>
+                        <option value="INVESTIGATOR">Investigator</option>
+                        <option value="EVALUATOR">Evaluator</option>
+                        <option value="HR">HR Manager</option>
+                        <option value="CMD">CMD Manager</option>
+                      </>
+                    )}
+                    {(!form.department || (!form.department.toLowerCase().includes('hr') && !form.department.toLowerCase().includes('cmd'))) && (
+                      <>
+                        <option value="CMD">CMD Manager</option>
+                        <option value="HR">HR Manager</option>
+                        <option value="INVESTIGATOR">Investigator</option>
+                        <option value="HANDLER">Handler</option>
+                        <option value="EVALUATOR">Evaluator</option>
+                      </>
+                    )}
                     <option value="ADMIN">Administrator</option>
                   </select>
                 </div>

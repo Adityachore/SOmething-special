@@ -29,3 +29,10 @@ celerybeat-schedule*
 # OS Files
 .DS_Store
 Thumbs.db
+
+# Local test scripts and artifacts
+.playwright-mcp/
+backend/check_specific.py
+backend/db_helper.py
+backend/local_db.sqlite
+create_employees.js

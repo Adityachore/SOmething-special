@@ -311,6 +311,10 @@ h1, h2, h3, h4, h5, h6, .font-heading {
 .input::placeholder, .textarea::placeholder { color: var(--text-muted); }
 .textarea { resize: vertical; min-height: 100px; }
 .select { appearance: none; cursor: pointer; }
+.select option {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
 
 /* ─── Checkboxes ─────────────────────────────────── */
 input[type="checkbox"] {

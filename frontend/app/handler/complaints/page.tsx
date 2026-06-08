@@ -123,7 +123,7 @@ export default function HandlerComplaints() {
                       <td>
                         <div style={{ display:'flex', gap:5 }}>
                           <button className="btn-icon" onClick={() => router.push(`/handler/complaints/${c.id}`)}><Eye size={13}/></button>
-                          {c.status === 'PENDING' && <button className="btn-icon" onClick={() => startComplaint(c.id).then(load)} title="Start"><Play size={13}/></button>}
+                          {!(profile?.role === 'CMD' && c.is_hr_sensitive) && c.status === 'PENDING' && <button className="btn-icon" onClick={() => startComplaint(c.id).then(load)} title="Start"><Play size={13}/></button>}
                         </div>
                       </td>
                     </tr>

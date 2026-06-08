@@ -13,10 +13,12 @@ import {
   ArrowLeft, Play, CheckCircle, XCircle, UserPlus, RotateCcw, Brain,
   Clock, Paperclip, Upload, Send, X, Eye, EyeOff
 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 export default function HandlerComplaintDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const { user: currentUser } = useAuth();
   const [c, setC] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState<any[]>([]);
@@ -84,6 +86,7 @@ export default function HandlerComplaintDetail() {
   const isPending = c.status === 'PENDING';
   const isInProgress = c.status === 'IN_PROGRESS';
   const isClosed = ['SOLVED','REJECTED','WITHDRAWN','EXPIRED'].includes(c.status);
+  const isAdminViewingHr = currentUser?.role === 'ADMIN' && c.is_hr_sensitive;
 
   return (
     <DashboardLayout title="Complaint Detail">
@@ -104,12 +107,16 @@ export default function HandlerComplaintDetail() {
             </div>
           </div>
           <div style={{ display:'flex', gap:8, flexShrink:0, flexWrap:'wrap' }}>
-            {isPending && <button className="btn btn-primary" onClick={() => doAction(() => startComplaint(id), 'Work started!')}><Play size={14}/> Start</button>}
-            {isPending && <button className="btn btn-secondary" onClick={() => setModal('assign')}><UserPlus size={14}/> Assign</button>}
-            {(isPending || isInProgress) && <button className="btn btn-success" onClick={() => setModal('resolve')}><CheckCircle size={14}/> Resolve</button>}
-            {(isPending || isInProgress) && <button className="btn btn-danger" onClick={() => setModal('reject')}><XCircle size={14}/> Reject</button>}
-            {isClosed && <button className="btn btn-secondary" onClick={() => doAction(() => reopenComplaint(id), 'Reopened!')}><RotateCcw size={14}/> Reopen</button>}
-            {isInProgress && <button className="btn btn-secondary" onClick={() => setModal('assign')}><UserPlus size={14}/> Reassign</button>}
+            {!isAdminViewingHr && (
+              <>
+                {isPending && <button className="btn btn-primary" onClick={() => doAction(() => startComplaint(id), 'Work started!')}><Play size={14}/> Start</button>}
+                {isPending && <button className="btn btn-secondary" onClick={() => setModal('assign')}><UserPlus size={14}/> Assign</button>}
+                {(isPending || isInProgress) && <button className="btn btn-success" onClick={() => setModal('resolve')}><CheckCircle size={14}/> Resolve</button>}
+                {(isPending || isInProgress) && <button className="btn btn-danger" onClick={() => setModal('reject')}><XCircle size={14}/> Reject</button>}
+                {isClosed && <button className="btn btn-secondary" onClick={() => doAction(() => reopenComplaint(id), 'Reopened!')}><RotateCcw size={14}/> Reopen</button>}
+                {isInProgress && <button className="btn btn-secondary" onClick={() => setModal('assign')}><UserPlus size={14}/> Reassign</button>}
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -119,7 +126,9 @@ export default function HandlerComplaintDetail() {
         <div className="glass" style={{ padding:20 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}><Brain size={16} style={{ color:'#34d399' }}/><span style={{ fontSize:14, fontWeight:600, color:'#f1f5f9' }}>AI Analysis</span></div>
-            <button className="btn btn-secondary" style={{ fontSize:11, padding:'4px 8px' }} onClick={() => setModal('override')}>Override</button>
+            {!isAdminViewingHr && (
+              <button className="btn btn-secondary" style={{ fontSize:11, padding:'4px 8px' }} onClick={() => setModal('override')}>Override</button>
+            )}
           </div>
           {[{l:'Summary',v:c.ai_summary},{l:'Category Reason',v:c.ai_categorization_reason},{l:'Priority Reason',v:c.ai_priority_reason},{l:'Sub-category',v:c.sub_category},{l:'Department',v:c.primary_department}].map(i => i.v && (
             <div key={i.l} style={{ marginBottom:10 }}>
@@ -164,8 +173,12 @@ export default function HandlerComplaintDetail() {
       <div className="glass" style={{ padding:20, marginBottom:20 }}>
         <div className="section-header" style={{ marginBottom:12 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}><Paperclip size={16} style={{ color:'#64748b' }}/><span style={{ fontSize:14, fontWeight:600, color:'#f1f5f9' }}>Attachments ({c.attachments?.length || 0})</span></div>
-          <button className="btn btn-secondary" onClick={() => fileRef.current?.click()} style={{ fontSize:12 }}><Upload size={13}/> Upload</button>
-          <input ref={fileRef} type="file" hidden onChange={handleUpload}/>
+          {!isAdminViewingHr && (
+            <>
+              <button className="btn btn-secondary" onClick={() => fileRef.current?.click()} style={{ fontSize:12 }}><Upload size={13}/> Upload</button>
+              <input ref={fileRef} type="file" hidden onChange={handleUpload}/>
+            </>
+          )}
         </div>
         {c.attachments?.map((a:any) => (
           <div key={a.id} style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 0', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>

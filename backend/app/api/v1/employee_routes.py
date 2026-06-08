@@ -43,7 +43,9 @@ async def list_employees(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100)
 ):
-    _require_hr_or_admin(user)
+    from app.core.rbac import is_handler
+    if not is_handler(user):
+        raise ForbiddenError("Handler or Admin access required.")
     
     q_base = select(User).where(User.tenant_id == user.tenant_id, User.deleted_at.is_(None))
     

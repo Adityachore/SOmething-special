@@ -6,7 +6,7 @@ import { StatusBadge, PriorityBadge, HRBadge } from '@/components/Badges';
 import ClientDate from '@/components/ClientDate';
 import {
   getComplaint, startComplaint, assignComplaint, resolveComplaint, rejectComplaint,
-  reopenComplaint, getNotes, addNote, getComplaintAuditLogs, uploadAttachment, getUsers,
+  reopenComplaint, getNotes, addNote, getComplaintAuditLogs, uploadAttachment, getEmployees,
   overrideComplaint, deleteAttachment, closeComplaint, waitForEmployee
 } from '@/lib/api';
 import api from '@/lib/api';
@@ -94,7 +94,7 @@ export default function HandlerComplaintDetail() {
   const openAssignModal = () => {
     setModal('assign');
     if (users.length === 0) {
-      getUsers()
+      getEmployees({ page_size: 100 })
         .then(res => setUsers(res.data || []))
         .catch(() => setMsg('Failed to load users for assignment.'));
     }
@@ -149,6 +149,7 @@ export default function HandlerComplaintDetail() {
   const isSolved = c.status === 'SOLVED';
   const canReopen = ['REJECTED', 'WITHDRAWN', 'EXPIRED'].includes(c.status) || isSolved;
   const canClose = isSolved;
+  const isCmdViewingHr = currentUser?.role === 'CMD' && c.is_hr_sensitive;
 
   return (
     <DashboardLayout title="Complaint Detail">
@@ -169,21 +170,25 @@ export default function HandlerComplaintDetail() {
             </div>
           </div>
           <div style={{ display:'flex', gap:8, flexShrink:0, flexWrap:'wrap' }}>
-            {isPending && <button className="btn btn-primary" onClick={() => doAction(() => startComplaint(id), 'Work started!')}><Play size={14}/> Start</button>}
-            {isPending && <button className="btn btn-secondary" onClick={openAssignModal}><UserPlus size={14}/> Assign</button>}
-            {isInProgress && <button className="btn btn-secondary" onClick={() => setModal('wait')}><Clock size={14}/> Wait for Employee</button>}
-            {(isPending || isInProgress || isWaiting) && <button className="btn btn-success" onClick={() => setModal('resolve')}><CheckCircle size={14}/> Resolve</button>}
-            {(isPending || isInProgress || isWaiting) && <button className="btn btn-danger" onClick={() => setModal('reject')}><XCircle size={14}/> Reject</button>}
-            {isWaiting && <button className="btn btn-primary" onClick={() => doAction(() => startComplaint(id), 'Work resumed!')}><Play size={14}/> Resume</button>}
-            {(isPending || isInProgress || isWaiting) && (
+            {!isCmdViewingHr && (
               <>
-                <button className="btn btn-secondary" onClick={() => fileRef.current?.click()}><Upload size={14}/> Upload</button>
-                <input ref={fileRef} type="file" hidden onChange={handleUpload}/>
+                {isPending && <button className="btn btn-primary" onClick={() => doAction(() => startComplaint(id), 'Work started!')}><Play size={14}/> Start</button>}
+                {isPending && <button className="btn btn-secondary" onClick={openAssignModal}><UserPlus size={14}/> Assign</button>}
+                {isInProgress && <button className="btn btn-secondary" onClick={() => setModal('wait')}><Clock size={14}/> Wait for Employee</button>}
+                {(isPending || isInProgress || isWaiting) && <button className="btn btn-success" onClick={() => setModal('resolve')}><CheckCircle size={14}/> Resolve</button>}
+                {(isPending || isInProgress || isWaiting) && <button className="btn btn-danger" onClick={() => setModal('reject')}><XCircle size={14}/> Reject</button>}
+                {isWaiting && <button className="btn btn-primary" onClick={() => doAction(() => startComplaint(id), 'Work resumed!')}><Play size={14}/> Resume</button>}
+                {(isPending || isInProgress || isWaiting) && (
+                  <>
+                    <button className="btn btn-secondary" onClick={() => fileRef.current?.click()}><Upload size={14}/> Upload</button>
+                    <input ref={fileRef} type="file" hidden onChange={handleUpload}/>
+                  </>
+                )}
+                {canClose && <button className="btn btn-success" onClick={() => doAction(() => closeComplaint(id), 'Complaint closed!')}><CheckCircle size={14}/> Close</button>}
+                {canReopen && <button className="btn btn-secondary" onClick={() => doAction(() => reopenComplaint(id), 'Reopened!')}><RotateCcw size={14}/> Reopen</button>}
+                {(isInProgress || isPending) && <button className="btn btn-secondary" onClick={openAssignModal}><UserPlus size={14}/> {c.assigned_to_user_id ? 'Reassign' : 'Assign'}</button>}
               </>
             )}
-            {canClose && <button className="btn btn-success" onClick={() => doAction(() => closeComplaint(id), 'Complaint closed!')}><CheckCircle size={14}/> Close</button>}
-            {canReopen && <button className="btn btn-secondary" onClick={() => doAction(() => reopenComplaint(id), 'Reopened!')}><RotateCcw size={14}/> Reopen</button>}
-            {(isInProgress || isPending) && <button className="btn btn-secondary" onClick={openAssignModal}><UserPlus size={14}/> {c.assigned_to_user_id ? 'Reassign' : 'Assign'}</button>}
           </div>
         </div>
       </div>
@@ -193,7 +198,9 @@ export default function HandlerComplaintDetail() {
         <div className="glass" style={{ padding:20 }}>
           <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
             <div style={{ display:'flex', alignItems:'center', gap:8 }}><Brain size={16} style={{ color:'#34d399' }}/><span style={{ fontSize:14, fontWeight:600, color:'#f1f5f9' }}>AI Analysis</span></div>
-            <button className="btn btn-secondary" style={{ fontSize:11, padding:'4px 8px' }} onClick={() => setModal('override')}>Override</button>
+            {!isCmdViewingHr && (
+              <button className="btn btn-secondary" style={{ fontSize:11, padding:'4px 8px' }} onClick={() => setModal('override')}>Override</button>
+            )}
           </div>
           {[{l:'Summary',v:c.ai_summary},{l:'Category Reason',v:c.ai_categorization_reason},{l:'Priority Reason',v:c.ai_priority_reason},{l:'Value Reason',v:c.ai_value_reason},{l:'Sub-category',v:c.sub_category},{l:'Department',v:c.primary_department}].map(i => i.v && (
             <div key={i.l} style={{ marginBottom:10 }}>

@@ -37,8 +37,8 @@ def is_admin(user: User) -> bool:
 
 
 def is_handler(user: User) -> bool:
-    """ORG_ADMIN or ADMIN or CMD or HR or DEPT_HEAD — anyone who can handle complaints."""
-    return user.role in (UserRole.ORG_ADMIN, UserRole.ADMIN, UserRole.CMD, UserRole.HR, UserRole.DEPT_HEAD)
+    """ORG_ADMIN or ADMIN or CMD or HR or DEPT_HEAD or INVESTIGATOR or HANDLER or EVALUATOR — anyone who can handle complaints."""
+    return user.role in (UserRole.ORG_ADMIN, UserRole.ADMIN, UserRole.CMD, UserRole.HR, UserRole.DEPT_HEAD, UserRole.INVESTIGATOR, UserRole.HANDLER, UserRole.EVALUATOR)
 
 
 def _is_user_in_hr_dept(user: User) -> bool:
@@ -74,8 +74,8 @@ def can_view_complaint(user: User, complaint: Complaint, tenant=None) -> bool:
         return True
 
     if complaint.is_hr_sensitive:
-        # HR role or explicit capability always has access
-        if user.role == UserRole.HR or user.can_view_hr_sensitive or _is_user_in_hr_dept(user):
+        # HR/INVESTIGATOR/HANDLER/EVALUATOR role or explicit capability always has access
+        if user.role in (UserRole.HR, UserRole.INVESTIGATOR, UserRole.HANDLER, UserRole.EVALUATOR) or user.can_view_hr_sensitive or _is_user_in_hr_dept(user):
             return True
 
         # CMD access governed by tenant settings
@@ -93,7 +93,7 @@ def can_view_complaint(user: User, complaint: Complaint, tenant=None) -> bool:
         return False
 
     # Non-HR-sensitive complaints
-    if user.role in (UserRole.HR, UserRole.CMD):
+    if user.role in (UserRole.HR, UserRole.CMD, UserRole.INVESTIGATOR, UserRole.HANDLER, UserRole.EVALUATOR):
         return True
 
     if user.role == UserRole.DEPT_HEAD:
@@ -129,7 +129,7 @@ def can_handle_complaint(user: User, complaint: Complaint, tenant=None) -> bool:
         return True
 
     if complaint.is_hr_sensitive:
-        if user.role == UserRole.HR or user.can_view_hr_sensitive or _is_user_in_hr_dept(user):
+        if user.role in (UserRole.HR, UserRole.INVESTIGATOR, UserRole.HANDLER, UserRole.EVALUATOR) or user.can_view_hr_sensitive or _is_user_in_hr_dept(user):
             return True
 
         # CMD can handle only if tenant explicitly allows full (non-anonymized) access
@@ -145,7 +145,7 @@ def can_handle_complaint(user: User, complaint: Complaint, tenant=None) -> bool:
 
         return False
 
-    if user.role == UserRole.HR:
+    if user.role in (UserRole.HR, UserRole.INVESTIGATOR, UserRole.HANDLER, UserRole.EVALUATOR):
         return True
 
     if user.role == UserRole.CMD:
@@ -159,7 +159,7 @@ def can_handle_complaint(user: User, complaint: Complaint, tenant=None) -> bool:
 
 def can_view_hr_sensitive(user: User, tenant=None) -> bool:
     """Check if user can view HR-sensitive complaints at all (used for list filtering)."""
-    if user.role in (UserRole.HR, UserRole.ADMIN, UserRole.ORG_ADMIN) or _is_user_in_hr_dept(user) or user.can_view_hr_sensitive:
+    if user.role in (UserRole.HR, UserRole.INVESTIGATOR, UserRole.HANDLER, UserRole.EVALUATOR, UserRole.ADMIN, UserRole.ORG_ADMIN) or _is_user_in_hr_dept(user) or user.can_view_hr_sensitive:
         return True
     if user.role == UserRole.CMD and tenant:
         return tenant.allow_cmd_view_hr_sensitive or tenant.allow_cmd_view_hr_sensitive_anonymized
