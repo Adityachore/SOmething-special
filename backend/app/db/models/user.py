@@ -71,6 +71,7 @@ class User(Base):
         foreign_keys="ProfileUpdateRequest.reviewed_by"
     )
     reporting_manager: Mapped["User | None"] = relationship("User", remote_side=[id], foreign_keys=[reporting_manager_id])
+    team_memberships: Mapped[list["TeamMember"]] = relationship("TeamMember", back_populates="user", cascade="all, delete-orphan")
 
     @property
     def tenant_name(self) -> str | None:

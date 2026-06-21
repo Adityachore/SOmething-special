@@ -107,6 +107,7 @@ async def list_complaints(
     status: ComplaintStatus | None = Query(None),
     department: str | None = Query(None),
     priority: PriorityLevel | None = Query(None),
+    team_id: str | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
@@ -114,7 +115,7 @@ async def list_complaints(
 ):
     if not is_handler(user):
         raise ForbiddenError("Only CMD, HR, and Admin can access this endpoint.")
-    items, total = await ComplaintService.list_for_handler(db, user, status, department, priority, page, page_size)
+    items, total = await ComplaintService.list_for_handler(db, user, status, department, priority, page, page_size, team_id=team_id)
     return ComplaintListResponse(items=[_resp(c, user) for c in items], total=total, page=page, page_size=page_size)
 
 
@@ -181,7 +182,14 @@ async def assign_complaint(
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    return _resp(await ComplaintService.assign(db, user, complaint_id, payload.assigned_to_user_id), user)
+    return _resp(
+        await ComplaintService.assign(
+            db, user, complaint_id,
+            assigned_to_user_id=payload.assigned_to_user_id,
+            assigned_team_id=payload.assigned_team_id
+        ),
+        user
+    )
 
 
 # ─── Handler: Start Work ──────────────────────────────────────────────────────

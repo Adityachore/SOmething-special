@@ -34,3 +34,4 @@ class Tenant(Base):
     notifications: Mapped[list["Notification"]] = relationship("Notification", back_populates="tenant")
     departments: Mapped[list["Department"]] = relationship("Department", back_populates="tenant")
     invitations: Mapped[list["Invitation"]] = relationship("Invitation", back_populates="tenant")
+    teams: Mapped[list["Team"]] = relationship("Team", back_populates="tenant", cascade="all, delete-orphan")

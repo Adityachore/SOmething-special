@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import settings
-from app.api.v1 import auth_routes, complaint_routes, admin_routes, notification_routes, employee_routes, org_routes, invitation_routes
+from app.api.v1 import auth_routes, complaint_routes, admin_routes, notification_routes, employee_routes, org_routes, invitation_routes, team_routes
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -45,6 +45,7 @@ app.include_router(notification_routes.router, prefix=API_PREFIX)
 app.include_router(employee_routes.router, prefix=API_PREFIX)
 app.include_router(org_routes.router, prefix=API_PREFIX)
 app.include_router(invitation_routes.router, prefix=API_PREFIX)
+app.include_router(team_routes.router, prefix=API_PREFIX)
 
 # ─── Health Check ─────────────────────────────────────────────────────────────
 @app.get("/health", tags=["Health"])

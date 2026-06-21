@@ -26,18 +26,7 @@ export default function SignupPage() {
         admin_password: adminPassword,
       });
 
-      // Save tokens and user info to log in the admin automatically
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-      const u = {
-        user_id: data.user_id,
-        role: data.role,
-        tenant_id: data.tenant_id,
-        email: adminEmail,
-        name: adminName,
-      };
-      localStorage.setItem('user', JSON.stringify(u));
-      
+      // Cookies are handled by the backend
       // Redirect to the organization setup wizard
       window.location.href = '/org-setup';
     } catch (err: any) {

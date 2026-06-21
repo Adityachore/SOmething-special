@@ -16,6 +16,7 @@ from app.db.models.auth_token import AuthToken
 from app.db.models.profile_update_request import ProfileUpdateRequest
 from app.db.models.department import Department, DepartmentType
 from app.db.models.invitation import Invitation
+from app.db.models.team import Team, TeamMember
 
 __all__ = [
     "Tenant", "User", "UserRole",
@@ -28,4 +29,5 @@ __all__ = [
     "ComplaintAttachment", "Tag", "ComplaintTag",
     "AuthToken", "ProfileUpdateRequest",
     "Department", "DepartmentType", "Invitation",
+    "Team", "TeamMember",
 ]

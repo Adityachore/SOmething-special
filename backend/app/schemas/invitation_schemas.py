@@ -5,6 +5,11 @@ class InvitationCreate(BaseModel):
     email: EmailStr
     role: str # ORG_ADMIN, HR, CMD, DEPT_HEAD, EMPLOYEE
     department_id: str | None = None
+    name: str | None = None
+    employee_id: str | None = None
+    designation: str | None = None
+    phone: str | None = None
+    date_of_joining: datetime | None = None
 
 class InvitationAccept(BaseModel):
     token: str
@@ -19,6 +24,11 @@ class InvitationResponse(BaseModel):
     expiry_date: datetime
     status: str
     created_at: datetime
+    name: str | None = None
+    employee_id: str | None = None
+    designation: str | None = None
+    phone: str | None = None
+    date_of_joining: datetime | None = None
 
     model_config = {"from_attributes": True}
 

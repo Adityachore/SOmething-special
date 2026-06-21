@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 import uuid
@@ -11,7 +11,7 @@ from app.db.models.invitation import Invitation
 from app.db.models.department import Department, DepartmentType
 from app.db.models.tenant import Tenant
 from app.schemas.invitation_schemas import InvitationCreate, InvitationAccept, InvitationResponse, InvitationCreateResponse
-from app.schemas.auth_schemas import TokenResponse
+from app.schemas.auth_schemas import TokenResponse, LoginResponse
 from app.schemas.org_schemas import OrgSignupRequest
 from app.core.security import hash_password, create_access_token, create_refresh_token, hash_refresh_token, get_refresh_token_expiry
 from app.db.models.auth_token import AuthToken
@@ -69,6 +69,11 @@ async def invite_member(
         token=token,
         expiry_date=datetime.now(dt_timezone.utc) + timedelta(days=7),
         status="PENDING",
+        name=payload.name,
+        employee_id=payload.employee_id,
+        designation=payload.designation,
+        phone=payload.phone,
+        date_of_joining=payload.date_of_joining,
     )
     db.add(new_inv)
     await db.commit()
@@ -94,9 +99,10 @@ async def list_invitations(
     return result.scalars().all()
 
 
-@router.post("/public/invitations/accept", response_model=TokenResponse)
+@router.post("/public/invitations/accept", response_model=LoginResponse)
 async def accept_invitation(
     payload: InvitationAccept,
+    response: Response,
     db: AsyncSession = Depends(get_db),
 ):
     # Find active invitation
@@ -142,6 +148,18 @@ async def accept_invitation(
             user.department = dept_res.scalar_one_or_none()
         user.status = "Active"
         
+        # Update pre-onboarding fields from invitation
+        if inv.name:
+            user.name = inv.name
+        if inv.employee_id:
+            user.employee_id = inv.employee_id
+        if inv.designation:
+            user.designation = inv.designation
+        if inv.phone:
+            user.phone = inv.phone
+        if inv.date_of_joining:
+            user.date_of_joining = inv.date_of_joining
+        
         # Update capabilities
         user.can_evaluate = can_eval
         user.can_investigate = can_inv
@@ -158,12 +176,16 @@ async def accept_invitation(
 
         user = User(
             tenant_id=inv.tenant_id,
-            name=inv.email.split("@")[0].capitalize(),
+            name=inv.name or inv.email.split("@")[0].capitalize(),
             email=inv.email,
             hashed_password=hashed_pwd,
             role=inv.role,
             department_id=inv.department_id,
             department=dept_name,
+            employee_id=inv.employee_id,
+            designation=inv.designation,
+            phone=inv.phone,
+            date_of_joining=inv.date_of_joining,
             status="Active",
             email_verified=True,
             can_evaluate=can_eval,
@@ -203,18 +225,27 @@ async def accept_invitation(
     db.add(db_token)
     await db.commit()
 
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
+    response.set_cookie(
+        key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=30*60
+    )
+    response.set_cookie(
+        key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="lax", max_age=7*24*60*60
+    )
+
+    return LoginResponse(
         user_id=user.id,
         role=user.role,
         tenant_id=user.tenant_id,
+        email=user.email,
+        name=user.name,
+        department_id=user.department_id,
     )
 
 
-@router.post("/public/signup-org", response_model=TokenResponse)
+@router.post("/public/signup-org", response_model=LoginResponse)
 async def signup_org(
     payload: OrgSignupRequest,
+    response: Response,
     db: AsyncSession = Depends(get_db),
 ):
     # Check if user email already exists
@@ -295,10 +326,17 @@ async def signup_org(
     db.add(db_token)
     await db.commit()
 
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
+    response.set_cookie(
+        key="access_token", value=access_token, httponly=True, secure=False, samesite="lax", max_age=30*60
+    )
+    response.set_cookie(
+        key="refresh_token", value=refresh_token, httponly=True, secure=False, samesite="lax", max_age=7*24*60*60
+    )
+
+    return LoginResponse(
         user_id=admin_user.id,
         role=admin_user.role,
         tenant_id=admin_user.tenant_id,
+        email=admin_user.email,
+        name=admin_user.name,
     )

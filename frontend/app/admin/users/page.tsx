@@ -9,7 +9,8 @@ import {
   toggleEmployeeStatus, 
   bulkDeactivateEmployees, 
   bulkUploadEmployees,
-  getDepartments
+  getDepartments,
+  inviteMember
 } from '@/lib/api';
 import ClientDate from '@/components/ClientDate';
 import { 
@@ -33,6 +34,7 @@ export default function AdminUsers() {
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState<'' | 'create' | 'edit' | 'import'>('');
   const [editUser, setEditUser] = useState<any>(null);
+  const [step, setStep] = useState(1);
   
   // Single User Form State
   const [form, setForm] = useState({ 
@@ -112,6 +114,7 @@ export default function AdminUsers() {
   }, [page, search, deptFilter, statusFilter]);
 
   const openCreate = () => { 
+    setStep(1);
     setForm({ 
       employee_id: '',
       name: '', 
@@ -176,28 +179,44 @@ export default function AdminUsers() {
     setError('');
     setSuccessMsg('');
     try { 
-      await createEmployee({ 
-        employee_id: form.employee_id || undefined,
-        name: form.name, 
-        email: form.email, 
-        password: form.password, 
-        role: form.role, 
-        department: form.department || undefined,
-        department_id: form.department_id || undefined,
-        designation: form.designation || undefined,
-        reporting_manager_id: form.reporting_manager_id || undefined,
-        phone: form.phone || undefined,
-        date_of_joining: form.date_of_joining ? `${form.date_of_joining}T00:00:00Z` : undefined,
-        status: form.status,
-        can_assign_complaints: form.can_assign_complaints,
-        can_resolve_complaints: form.can_resolve_complaints,
-        can_view_hr_sensitive: form.can_view_hr_sensitive,
-        can_evaluate: form.can_evaluate,
-        can_investigate: form.can_investigate,
-        can_approve_resolution: form.can_approve_resolution,
-      }); 
+      if (form.status === 'Active') {
+        await inviteMember({
+          email: form.email,
+          role: form.role,
+          department_id: form.department_id || null,
+          name: form.name,
+          employee_id: form.employee_id || null,
+          designation: form.designation || null,
+          phone: form.phone || null,
+          date_of_joining: form.date_of_joining ? `${form.date_of_joining}T00:00:00Z` : null,
+        });
+        setSuccessMsg(`Invitation successfully sent to ${form.email}!`);
+      } else {
+        const randomPassword = Math.random().toString(36).slice(-10) + 'aA1!';
+        await createEmployee({ 
+          employee_id: form.employee_id || undefined,
+          name: form.name, 
+          email: form.email, 
+          password: randomPassword, 
+          role: form.role, 
+          department: form.department || undefined,
+          department_id: form.department_id || undefined,
+          designation: form.designation || undefined,
+          reporting_manager_id: form.reporting_manager_id || undefined,
+          phone: form.phone || undefined,
+          date_of_joining: form.date_of_joining ? `${form.date_of_joining}T00:00:00Z` : undefined,
+          status: 'Inactive',
+          can_assign_complaints: ['ADMIN', 'ORG_ADMIN', 'HR'].includes(form.role),
+          can_resolve_complaints: ['ADMIN', 'ORG_ADMIN', 'HR'].includes(form.role),
+          can_view_hr_sensitive: ['ADMIN', 'ORG_ADMIN', 'HR'].includes(form.role),
+          can_evaluate: ['ADMIN', 'ORG_ADMIN', 'HR', 'CMD', 'EVALUATOR'].includes(form.role),
+          can_investigate: ['ADMIN', 'ORG_ADMIN', 'HR', 'INVESTIGATOR'].includes(form.role),
+          can_approve_resolution: ['ADMIN', 'ORG_ADMIN', 'CMD', 'EVALUATOR'].includes(form.role),
+        }); 
+        setSuccessMsg(`Employee account for ${form.name} created as Inactive.`);
+      }
       load(); 
-      setModal(''); 
+      setTimeout(() => setModal(''), 2000); 
     } catch (err: any) { 
       setError(err.response?.data?.detail || err.response?.data?.message || 'Failed to add employee.'); 
     } finally { 
@@ -260,29 +279,24 @@ export default function AdminUsers() {
   };
 
   const handleExport = () => {
-    let url = 'http://localhost:8000/api/v1/employees/export';
+    let url = '/employees/export';
     const params = [];
     if (deptFilter) params.push(`department=${encodeURIComponent(deptFilter)}`);
     if (statusFilter) params.push(`status=${encodeURIComponent(statusFilter)}`);
     if (params.length) url += `?${params.join('&')}`;
     
-    // Trigger download
-    const token = localStorage.getItem('access_token');
-    const a = document.createElement('a');
-    a.href = url;
-    // Add token authorization to URL if required, but standard CSV download can be done using a fetch or standard anchor.
-    // To ensure authorization headers are sent, let's fetch it as a blob.
-    fetch(url, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-      .then(res => res.blob())
-      .then(blob => {
-        const fileUrl = window.URL.createObjectURL(blob);
-        a.href = fileUrl;
-        a.download = `employees_export_${new Date().toISOString().slice(0,10)}.csv`;
-        a.click();
-      })
-      .catch(err => alert('Export failed.'));
+    // Trigger download using the configured api instance to handle cookies
+    import('@/lib/api').then(({ default: api }) => {
+      api.get(url, { responseType: 'blob' })
+        .then(res => {
+          const fileUrl = window.URL.createObjectURL(res.data);
+          const a = document.createElement('a');
+          a.href = fileUrl;
+          a.download = `employees_export_${new Date().toISOString().slice(0,10)}.csv`;
+          a.click();
+        })
+        .catch(err => alert('Export failed.'));
+    });
   };
 
   const handleImportSubmit = async (e: React.FormEvent) => {
@@ -509,18 +523,473 @@ export default function AdminUsers() {
         )}
       </div>
 
-      {/* Create / Edit Form Modal */}
-      {(modal === 'create' || modal === 'edit') && (
+      {/* Create Modal (4-step Wizard) */}
+      {modal === 'create' && (
+        <div className="modal-overlay" onClick={e => { if(e.target===e.currentTarget) setModal(''); }}>
+          <div className="modal-box animate-fade-in" style={{ maxWidth: 520, background: '#1c1917', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 16, boxShadow: '0 20px 40px rgba(0,0,0,0.5)', overflow: 'hidden' }}>
+            {/* Stepper Header */}
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9' }}>
+                  Add New Employee
+                </h3>
+                <button type="button" className="btn-icon" onClick={() => setModal('')}><X size={16}/></button>
+              </div>
+              
+              {/* Stepper Progress bar */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'relative' }}>
+                <div style={{ position: 'absolute', left: 0, right: 0, top: '50%', transform: 'translateY(-50%)', height: 2, background: 'rgba(255,255,255,0.08)', zIndex: 1 }} />
+                <div style={{ position: 'absolute', left: 0, width: `${((step - 1) / 3) * 100}%`, top: '50%', transform: 'translateY(-50%)', height: 2, background: 'linear-gradient(90deg, var(--purple), var(--purple-light))', transition: 'width 0.3s ease', zIndex: 1 }} />
+                
+                {[1, 2, 3, 4].map(s => (
+                  <div key={s} style={{ 
+                    width: 28, 
+                    height: 28, 
+                    borderRadius: '50%', 
+                    background: s < step ? 'var(--purple)' : s === step ? '#1e1b4b' : '#292524',
+                    border: s === step ? '2px solid var(--purple)' : '2px solid rgba(255,255,255,0.08)',
+                    color: s <= step ? '#fff' : '#64748b',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    zIndex: 2,
+                    position: 'relative',
+                    transition: 'all 0.3s ease',
+                    boxShadow: s === step ? '0 0 12px rgba(139, 92, 246, 0.4)' : 'none'
+                  }}>
+                    {s < step ? '✓' : s}
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8, fontSize: 10, color: '#64748b', padding: '0 2px' }}>
+                <span style={{ color: step >= 1 ? '#e2e8f0' : '#64748b', fontWeight: step === 1 ? 500 : 400 }}>1. Basics</span>
+                <span style={{ color: step >= 2 ? '#e2e8f0' : '#64748b', fontWeight: step === 2 ? 500 : 400 }}>2. Dept</span>
+                <span style={{ color: step >= 3 ? '#e2e8f0' : '#64748b', fontWeight: step === 3 ? 500 : 400 }}>3. Role</span>
+                <span style={{ color: step >= 4 ? '#e2e8f0' : '#64748b', fontWeight: step === 4 ? 500 : 400 }}>4. Setup</span>
+              </div>
+            </div>
+
+            {successMsg ? (
+              <div style={{ padding: 32, textAlign: 'center' }}>
+                <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(16,185,129,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+                  <Check size={24} style={{ color: '#10b981' }} />
+                </div>
+                <h3 style={{ fontSize: 16, fontWeight: 600, color: '#10b981', marginBottom: 8 }}>Success</h3>
+                <p style={{ fontSize: 13, color: '#94a3b8' }}>{successMsg}</p>
+              </div>
+            ) : (
+              <form onSubmit={handleCreate} style={{ padding: 24 }}>
+                {/* STEP 1: Basic Details */}
+                {step === 1 && (
+                  <div className="animate-fade-in">
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0', marginBottom: 16 }}>
+                      Step 1: Enter Employee Personal & ID Details
+                    </div>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Full Name *</label>
+                        <input 
+                          className="input" 
+                          value={form.name} 
+                          onChange={e => setForm(f => ({...f, name: e.target.value}))} 
+                          placeholder="e.g. Charlie Davis"
+                          required
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Email Address *</label>
+                        <input 
+                          className="input" 
+                          type="email"
+                          value={form.email} 
+                          onChange={e => setForm(f => ({...f, email: e.target.value}))} 
+                          placeholder="e.g. charlie@company.com"
+                          required
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Employee ID *</label>
+                          <input 
+                            className="input" 
+                            value={form.employee_id} 
+                            onChange={e => setForm(f => ({...f, employee_id: e.target.value}))} 
+                            placeholder="e.g. EMP003"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Designation (Optional)</label>
+                          <input 
+                            className="input" 
+                            value={form.designation} 
+                            onChange={e => setForm(f => ({...f, designation: e.target.value}))} 
+                            placeholder="e.g. HR Recruiter"
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Phone Number (Optional)</label>
+                          <input 
+                            className="input" 
+                            value={form.phone} 
+                            onChange={e => setForm(f => ({...f, phone: e.target.value}))} 
+                            placeholder="e.g. +91 99999 00003"
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Date of Joining (Optional)</label>
+                          <input 
+                            className="input" 
+                            type="date"
+                            value={form.date_of_joining} 
+                            onChange={e => setForm(f => ({...f, date_of_joining: e.target.value}))} 
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* STEP 2: Department */}
+                {step === 2 && (
+                  <div className="animate-fade-in">
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0', marginBottom: 16 }}>
+                      Step 2: Assign Department
+                    </div>
+                    
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', fontSize: 12, color: '#94a3b8', marginBottom: 6 }}>Department *</label>
+                      <select
+                        className="select"
+                        value={form.department_id}
+                        onChange={e => {
+                          const selectedId = e.target.value;
+                          const selectedDept = depts.find(d => d.id === selectedId);
+                          
+                          // Dynamic capability mapping suggestion based on department
+                          const isHrOrCmd = selectedDept && (selectedDept.type === 'HR' || selectedDept.type === 'CMD');
+                          
+                          setForm(f => ({
+                            ...f,
+                            department_id: selectedId,
+                            department: selectedDept ? selectedDept.name : '',
+                            // Default to EMPLOYEE if non-HR/CMD department, keep current role if HR/CMD
+                            role: isHrOrCmd ? f.role : 'EMPLOYEE'
+                          }));
+                        }}
+                        style={{ width: '100%', height: 38 }}
+                      >
+                        <option value="">Select Department</option>
+                        {depts.map((d: any) => (
+                          <option key={d.id} value={d.id}>{d.name} ({d.type})</option>
+                        ))}
+                      </select>
+                      <p style={{ fontSize: 11, color: '#64748b', marginTop: 6, lineHeight: 1.4 }}>
+                        Assigning the correct department is crucial for routing and compliance access.
+                      </p>
+                    </div>
+
+                    {form.department && (
+                      <div style={{ background: 'rgba(139, 92, 246, 0.05)', border: '1px solid rgba(139, 92, 246, 0.15)', borderRadius: 8, padding: 12 }}>
+                        <div style={{ fontSize: 12, fontWeight: 500, color: '#a78bfa', marginBottom: 4 }}>Department Type:</div>
+                        <div style={{ fontSize: 12, color: '#e2e8f0' }}>
+                          This is a <strong>{depts.find(d => d.id === form.department_id)?.type || 'NORMAL'}</strong> department. 
+                          {depts.find(d => d.id === form.department_id)?.type === 'HR' && " Employees in HR can be granted Handler/Investigator privileges."}
+                          {depts.find(d => d.id === form.department_id)?.type === 'CMD' && " Employees in CMD Desk can be granted Handler/Evaluator privileges."}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* STEP 3: System Role */}
+                {step === 3 && (() => {
+                  const selectedDeptObj = depts.find(d => d.id === form.department_id);
+                  const isHrOrCmd = selectedDeptObj && (selectedDeptObj.type === 'HR' || selectedDeptObj.type === 'CMD');
+                  
+                  return (
+                    <div className="animate-fade-in">
+                      <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0', marginBottom: 8 }}>
+                        Step 3: Choose Complaint System Role
+                      </div>
+                      
+                      {!isHrOrCmd && (
+                        <div style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.15)', borderRadius: 8, padding: 10, marginBottom: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <AlertTriangle size={14} style={{ color: '#f59e0b', flexShrink: 0 }} />
+                          <div style={{ fontSize: 11, color: '#f3f4f6', lineHeight: 1.4 }}>
+                            Typically, employees outside HR/CMD departments are assigned the <strong>Simple Employee</strong> role.
+                          </div>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 280, overflowY: 'auto', paddingRight: 4 }}>
+                        {/* Option 1: Simple Employee */}
+                        <div 
+                          onClick={() => setForm(f => ({ ...f, role: 'EMPLOYEE' }))}
+                          style={{
+                            padding: 12,
+                            borderRadius: 10,
+                            border: form.role === 'EMPLOYEE' ? '1px solid var(--purple)' : '1px solid rgba(255,255,255,0.06)',
+                            background: form.role === 'EMPLOYEE' ? 'rgba(139, 92, 246, 0.08)' : 'rgba(255,255,255,0.01)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>Simple Employee</div>
+                            <input type="radio" checked={form.role === 'EMPLOYEE'} readOnly style={{ accentColor: 'var(--purple)' }} />
+                          </div>
+                          <p style={{ fontSize: 11, color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>
+                            Can submit complaints, view status/history of submitted cases, and leave feedback.
+                          </p>
+                        </div>
+
+                        {/* Option 2: Handler */}
+                        <div 
+                          onClick={() => {
+                            if (!isHrOrCmd && !window.confirm("This employee is not in HR or CMD. Are you sure you want to assign them Handler privileges?")) return;
+                            setForm(f => ({ ...f, role: 'HANDLER' }));
+                          }}
+                          style={{
+                            padding: 12,
+                            borderRadius: 10,
+                            border: form.role === 'HANDLER' ? '1px solid var(--purple)' : '1px solid rgba(255,255,255,0.06)',
+                            background: form.role === 'HANDLER' ? 'rgba(139, 92, 246, 0.08)' : 'rgba(255,255,255,0.01)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>Handler</span>
+                              {isHrOrCmd && <span style={{ fontSize: 9, background: 'rgba(6, 182, 212, 0.15)', color: '#22d3ee', padding: '1px 4px', borderRadius: 4 }}>Recommended</span>}
+                            </div>
+                            <input type="radio" checked={form.role === 'HANDLER'} readOnly style={{ accentColor: 'var(--purple)' }} />
+                          </div>
+                          <p style={{ fontSize: 11, color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>
+                            Has access to the Handler Inbox. Routes, categorizes, and assigns incoming cases to investigation teams.
+                          </p>
+                        </div>
+
+                        {/* Option 3: Investigator */}
+                        <div 
+                          onClick={() => {
+                            if (!isHrOrCmd && !window.confirm("This employee is not in HR or CMD. Are you sure you want to assign them Investigator privileges?")) return;
+                            setForm(f => ({ ...f, role: 'INVESTIGATOR' }));
+                          }}
+                          style={{
+                            padding: 12,
+                            borderRadius: 10,
+                            border: form.role === 'INVESTIGATOR' ? '1px solid var(--purple)' : '1px solid rgba(255,255,255,0.06)',
+                            background: form.role === 'INVESTIGATOR' ? 'rgba(139, 92, 246, 0.08)' : 'rgba(255,255,255,0.01)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>Investigator</div>
+                            <input type="radio" checked={form.role === 'INVESTIGATOR'} readOnly style={{ accentColor: 'var(--purple)' }} />
+                          </div>
+                          <p style={{ fontSize: 11, color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>
+                            Works on assigned cases, records evidence, logs investigation steps, and submits recommendations.
+                          </p>
+                        </div>
+
+                        {/* Option 4: Evaluator */}
+                        <div 
+                          onClick={() => {
+                            if (!isHrOrCmd && !window.confirm("This employee is not in HR or CMD. Are you sure you want to assign them Evaluator privileges?")) return;
+                            setForm(f => ({ ...f, role: 'EVALUATOR' }));
+                          }}
+                          style={{
+                            padding: 12,
+                            borderRadius: 10,
+                            border: form.role === 'EVALUATOR' ? '1px solid var(--purple)' : '1px solid rgba(255,255,255,0.06)',
+                            background: form.role === 'EVALUATOR' ? 'rgba(139, 92, 246, 0.08)' : 'rgba(255,255,255,0.01)',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#fff' }}>Evaluator</div>
+                            <input type="radio" checked={form.role === 'EVALUATOR'} readOnly style={{ accentColor: 'var(--purple)' }} />
+                          </div>
+                          <p style={{ fontSize: 11, color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>
+                            Reviews completed cases, approves resolutions, oversees SLAs, and handles escalations.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* STEP 4: Setup & Onboarding */}
+                {step === 4 && (
+                  <div className="animate-fade-in">
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#e2e8f0', marginBottom: 16 }}>
+                      Step 4: Configure Onboarding Status & Save
+                    </div>
+
+                    <div style={{ display: 'flex', gap: 12, marginBottom: 18 }}>
+                      {/* Active Status */}
+                      <div 
+                        onClick={() => setForm(f => ({ ...f, status: 'Active' }))}
+                        style={{
+                          flex: 1,
+                          padding: 14,
+                          borderRadius: 10,
+                          border: form.status === 'Active' ? '1px solid #10b981' : '1px solid rgba(255,255,255,0.06)',
+                          background: form.status === 'Active' ? 'rgba(16, 185, 129, 0.06)' : 'rgba(255,255,255,0.01)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'center'
+                        }}
+                      >
+                        <div style={{ fontSize: 13, fontWeight: 600, color: form.status === 'Active' ? '#34d399' : '#fff', marginBottom: 4 }}>
+                          Active + Send Invite
+                        </div>
+                        <p style={{ fontSize: 10.5, color: '#94a3b8', margin: 0, lineHeight: 1.3 }}>
+                          System generates an invitation and emails setup link to set password.
+                        </p>
+                      </div>
+
+                      {/* Inactive Status */}
+                      <div 
+                        onClick={() => setForm(f => ({ ...f, status: 'Inactive' }))}
+                        style={{
+                          flex: 1,
+                          padding: 14,
+                          borderRadius: 10,
+                          border: form.status === 'Inactive' ? '1px solid #ef4444' : '1px solid rgba(255,255,255,0.06)',
+                          background: form.status === 'Inactive' ? 'rgba(239, 68, 68, 0.06)' : 'rgba(255,255,255,0.01)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          textAlign: 'center'
+                        }}
+                      >
+                        <div style={{ fontSize: 13, fontWeight: 600, color: form.status === 'Inactive' ? '#f87171' : '#fff', marginBottom: 4 }}>
+                          Inactive (Direct Save)
+                        </div>
+                        <p style={{ fontSize: 10.5, color: '#94a3b8', margin: 0, lineHeight: 1.3 }}>
+                          Directly registers user with disabled access. No onboarding email is sent.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Summary Preview Box */}
+                    <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 10, padding: 14, fontSize: 12 }}>
+                      <div style={{ fontWeight: 600, color: '#94a3b8', marginBottom: 8, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Summary Preview</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '6px 10px', color: '#e2e8f0' }}>
+                        <span style={{ color: '#64748b' }}>Name:</span>
+                        <strong>{form.name}</strong>
+                        
+                        <span style={{ color: '#64748b' }}>Email:</span>
+                        <span>{form.email}</span>
+                        
+                        <span style={{ color: '#64748b' }}>Emp ID:</span>
+                        <span style={{ color: '#34d399', fontWeight: 600 }}>{form.employee_id}</span>
+                        
+                        <span style={{ color: '#64748b' }}>Dept:</span>
+                        <span>{form.department || '—'} ({form.designation || 'No Designation'})</span>
+                        
+                        <span style={{ color: '#64748b' }}>Role:</span>
+                        <span style={{ color: '#8b5cf6', fontWeight: 500 }}>{form.role}</span>
+                        
+                        <span style={{ color: '#64748b' }}>Action:</span>
+                        <span>
+                          {form.status === 'Active' ? (
+                            <span style={{ color: '#34d399' }}>✓ Register & Send Invitation Link</span>
+                          ) : (
+                            <span style={{ color: '#f87171' }}>✗ Register Deactivated Account</span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {error && <div className="error-box" style={{ margin: '14px 0 0' }}>{error}</div>}
+                
+                {/* Wizard Navigation */}
+                <div style={{ display: 'flex', gap: 10, marginTop: 20, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                  {step > 1 && (
+                    <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => { setStep(s => s - 1); setError(''); }} disabled={submitting}>
+                      Back
+                    </button>
+                  )}
+                  {step === 1 && (
+                    <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setModal('')}>
+                      Cancel
+                    </button>
+                  )}
+                  
+                  {step < 4 ? (
+                    <button 
+                      type="button" 
+                      className="btn btn-primary" 
+                      style={{ flex: 2 }}
+                      onClick={() => {
+                        if (step === 1) {
+                          if (!form.name || !form.email || !form.employee_id) {
+                            setError('Name, Email, and Employee ID are required.');
+                            return;
+                          }
+                          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                          if (!emailRegex.test(form.email)) {
+                            setError('Please enter a valid email address.');
+                            return;
+                          }
+                          setError('');
+                          setStep(2);
+                        } else if (step === 2) {
+                          if (!form.department_id) {
+                            setError('Please select a department.');
+                            return;
+                          }
+                          setError('');
+                          setStep(3);
+                        } else if (step === 3) {
+                          setError('');
+                          setStep(4);
+                        }
+                      }}
+                    >
+                      Next
+                    </button>
+                  ) : (
+                    <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={submitting}>
+                      {submitting ? 'Processing...' : form.status === 'Active' ? 'Send Invitation' : 'Create Account'}
+                    </button>
+                  )}
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal (Original Single Screen) */}
+      {modal === 'edit' && (
         <div className="modal-overlay" onClick={e => { if(e.target===e.currentTarget) setModal(''); }}>
           <div className="modal-box animate-fade-in" style={{ maxWidth: 500 }}>
             <div className="section-header" style={{ marginBottom: 20 }}>
               <h3 style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9' }}>
-                {modal === 'create' ? 'Add New Employee' : 'Edit Employee Details'}
+                Edit Employee Details
               </h3>
               <button className="btn-icon" onClick={() => setModal('')}><X size={16}/></button>
             </div>
             
-            <form onSubmit={modal === 'create' ? handleCreate : handleEdit}>
+            <form onSubmit={handleEdit}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, color: '#94a3b8', marginBottom: 6 }}>Employee ID *</label>
@@ -554,20 +1023,19 @@ export default function AdminUsers() {
                     onChange={e => setForm(f => ({...f, email: e.target.value}))} 
                     placeholder="john@company.com"
                     required
-                    disabled={modal === 'edit'}
+                    disabled
                   />
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 13, color: '#94a3b8', marginBottom: 6 }}>
-                    {modal === 'create' ? 'Password *' : 'Password (Leave Blank)'}
+                    Password (Leave Blank)
                   </label>
                   <input 
                     className="input" 
                     type="password" 
                     value={form.password} 
                     onChange={e => setForm(f => ({...f, password: e.target.value}))} 
-                    placeholder={modal === 'create' ? 'Temporary Password' : '—'}
-                    required={modal === 'create'}
+                    placeholder="—"
                   />
                 </div>
               </div>
@@ -582,24 +1050,11 @@ export default function AdminUsers() {
                     style={{ width: '100%' }}
                   >
                     <option value="EMPLOYEE">Employee</option>
-                    {form.department && (form.department.toLowerCase().includes('hr') || form.department.toLowerCase().includes('cmd')) && (
-                      <>
-                        <option value="HANDLER">Handler</option>
-                        <option value="INVESTIGATOR">Investigator</option>
-                        <option value="EVALUATOR">Evaluator</option>
-                        <option value="HR">HR Manager</option>
-                        <option value="CMD">CMD Manager</option>
-                      </>
-                    )}
-                    {(!form.department || (!form.department.toLowerCase().includes('hr') && !form.department.toLowerCase().includes('cmd'))) && (
-                      <>
-                        <option value="CMD">CMD Manager</option>
-                        <option value="HR">HR Manager</option>
-                        <option value="INVESTIGATOR">Investigator</option>
-                        <option value="HANDLER">Handler</option>
-                        <option value="EVALUATOR">Evaluator</option>
-                      </>
-                    )}
+                    <option value="HANDLER">Handler</option>
+                    <option value="INVESTIGATOR">Investigator</option>
+                    <option value="EVALUATOR">Evaluator</option>
+                    <option value="HR">HR Manager</option>
+                    <option value="CMD">CMD Manager</option>
                     <option value="ADMIN">Administrator</option>
                   </select>
                 </div>
@@ -748,7 +1203,7 @@ export default function AdminUsers() {
               <div style={{ display: 'flex', gap: 10 }}>
                 <button type="button" className="btn btn-secondary" style={{ flex: 1 }} onClick={() => setModal('')}>Cancel</button>
                 <button type="submit" className="btn btn-primary" style={{ flex: 2 }} disabled={submitting}>
-                  {submitting ? 'Saving...' : modal === 'create' ? <><UserPlus size={14}/> Add Employee</> : 'Save Changes'}
+                  {submitting ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>

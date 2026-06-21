@@ -47,15 +47,7 @@ function AcceptInvitationForm() {
 
       setSuccess(true);
       
-      // Save tokens and user info to log in the user automatically
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-      const u = {
-        user_id: data.user_id,
-        role: data.role,
-        tenant_id: data.tenant_id
-      };
-      localStorage.setItem('user', JSON.stringify(u));
+      // Cookies are handled by the backend
 
       // Redirect to home page (which routes based on user role)
       setTimeout(() => {

@@ -195,7 +195,8 @@ class ComplaintService:
         status: ComplaintStatus | None,
         department: str | None,
         priority: PriorityLevel | None,
-        page: int, page_size: int
+        page: int, page_size: int,
+        team_id: str | None = None
     ) -> tuple[list[Complaint], int]:
         from app.db.models.user import UserRole
         from app.db.models.tenant import Tenant
@@ -235,6 +236,8 @@ class ComplaintService:
             conditions.append(Complaint.primary_department == department)
         if priority:
             conditions.append(Complaint.priority_level == priority)
+        if team_id:
+            conditions.append(Complaint.assigned_team_id == team_id)
 
         q = select(Complaint).where(and_(*conditions))
         total_result = await db.execute(select(func.count()).select_from(q.subquery()))
@@ -308,16 +311,21 @@ class ComplaintService:
 
     @staticmethod
     async def assign(
-        db: AsyncSession, user: User, complaint_id: str, assigned_to_user_id: str
+        db: AsyncSession, user: User, complaint_id: str,
+        assigned_to_user_id: str | None = None,
+        assigned_team_id: str | None = None
     ) -> Complaint:
         complaint = await ComplaintService._get_with_relations(db, complaint_id, user.tenant_id)
         assert_can_handle_complaint(user, complaint)
 
         old_assigned = complaint.assigned_to_user_id
+        old_team = complaint.assigned_team_id
         complaint.assigned_to_user_id = assigned_to_user_id
+        complaint.assigned_team_id = assigned_team_id
         await ComplaintService._log_audit(
             db, complaint.id, user.id, AuditActionType.ASSIGNMENT_CHANGE,
-            old_val={"assigned_to": old_assigned}, new_val={"assigned_to": assigned_to_user_id}
+            old_val={"assigned_to": old_assigned, "assigned_team": old_team},
+            new_val={"assigned_to": assigned_to_user_id, "assigned_team": assigned_team_id}
         )
         await db.commit()
         await ComplaintService._notify(db, complaint, user, "assigned")
@@ -580,6 +588,14 @@ class ComplaintService:
             recipients.add(complaint.employee_id)
         if complaint.assigned_to_user_id and complaint.assigned_to_user_id != actor.id:
             recipients.add(complaint.assigned_to_user_id)
+        if complaint.assigned_team_id:
+            from app.db.models.team import TeamMember
+            team_members_res = await db.execute(
+                select(TeamMember.user_id).where(TeamMember.team_id == complaint.assigned_team_id)
+            )
+            for member_uid in team_members_res.scalars().all():
+                if member_uid != actor.id:
+                    recipients.add(member_uid)
 
         for uid in recipients:
             notif = Notification(

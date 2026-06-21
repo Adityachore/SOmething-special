@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Request, Response, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.db.base import get_db
 from app.services.auth_service import AuthService
 from app.schemas.auth_schemas import (
     LoginRequest, TokenResponse, RefreshRequest, AccessTokenResponse,
-    ForgotPasswordRequest, ResetPasswordRequest
+    ForgotPasswordRequest, ResetPasswordRequest, LoginResponse, UserResponse
 )
 from app.core.deps import get_current_user
 from app.db.models.user import User
@@ -12,19 +12,88 @@ from app.db.models.user import User
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
-@router.post("/login", response_model=TokenResponse)
-async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
-    return await AuthService.login(db, payload.email, payload.password)
+@router.post("/login", response_model=LoginResponse)
+async def login(payload: LoginRequest, response: Response, db: AsyncSession = Depends(get_db)):
+    token_resp = await AuthService.login(db, payload.email, payload.password)
+    response.set_cookie(
+        key="access_token",
+        value=token_resp.access_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=30 * 60
+    )
+    response.set_cookie(
+        key="refresh_token",
+        value=token_resp.refresh_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=7 * 24 * 60 * 60
+    )
+    from sqlalchemy import select
+    res = await db.execute(select(User).where(User.id == token_resp.user_id))
+    user = res.scalar_one_or_none()
+    
+    return LoginResponse(
+        user_id=token_resp.user_id,
+        role=token_resp.role,
+        tenant_id=token_resp.tenant_id,
+        tenant_name=token_resp.tenant_name,
+        email=user.email if user else None,
+        name=user.name if user else None,
+        department_id=user.department_id if user else None,
+    )
 
 
-@router.post("/refresh", response_model=AccessTokenResponse)
-async def refresh(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
-    return await AuthService.refresh(db, payload.refresh_token)
+@router.post("/refresh", response_model=dict)
+async def refresh(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=401, detail="Refresh token missing")
+    
+    token_resp = await AuthService.refresh(db, refresh_token)
+    response.set_cookie(
+        key="access_token",
+        value=token_resp.access_token,
+        httponly=True,
+        secure=False,
+        samesite="lax",
+        max_age=30 * 60
+    )
+    return {"message": "Token refreshed"}
 
 
 @router.post("/logout", status_code=204)
-async def logout(payload: RefreshRequest, db: AsyncSession = Depends(get_db)):
-    await AuthService.logout(db, payload.refresh_token)
+async def logout(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+    refresh_token = request.cookies.get("refresh_token")
+    if refresh_token:
+        try:
+            await AuthService.logout(db, refresh_token)
+        except Exception:
+            pass
+    response.delete_cookie("access_token")
+    response.delete_cookie("refresh_token")
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(user: User = Depends(get_current_user)):
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        role=user.role,
+        tenant_id=user.tenant_id,
+        department_id=user.department_id,
+        department_name=user.department,
+        status=user.status,
+        can_evaluate=user.can_evaluate,
+        can_investigate=user.can_investigate,
+        can_approve_resolution=user.can_approve_resolution,
+        can_assign_complaints=user.can_assign_complaints,
+        can_resolve_complaints=user.can_resolve_complaints,
+        can_view_hr_sensitive=user.can_view_hr_sensitive
+    )
 
 
 @router.post("/forgot-password")

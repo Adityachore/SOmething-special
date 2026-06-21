@@ -70,6 +70,12 @@ def can_view_complaint(user: User, complaint: Complaint, tenant=None) -> bool:
     if complaint.employee_id == user.id:
         return True
 
+    # Check if complaint is assigned to a team the user belongs to
+    if complaint.assigned_team_id:
+        user_team_ids = [tm.team_id for tm in getattr(user, "team_memberships", [])]
+        if complaint.assigned_team_id in user_team_ids:
+            return True
+
     if user.role in (UserRole.ORG_ADMIN, UserRole.ADMIN):
         return True
 
@@ -124,6 +130,12 @@ def can_handle_complaint(user: User, complaint: Complaint, tenant=None) -> bool:
 
     if complaint.tenant_id != user.tenant_id:
         return False
+
+    # Check if complaint is assigned to a team the user belongs to
+    if complaint.assigned_team_id:
+        user_team_ids = [tm.team_id for tm in getattr(user, "team_memberships", [])]
+        if complaint.assigned_team_id in user_team_ids:
+            return True
 
     if user.role in (UserRole.ORG_ADMIN, UserRole.ADMIN):
         return True

@@ -41,6 +41,7 @@ class Complaint(Base):
     tenant_id: Mapped[str] = mapped_column(String, ForeignKey("tenants.id"), nullable=False, index=True)
     employee_id: Mapped[str] = mapped_column(String, ForeignKey("users.id"), nullable=False, index=True)
     assigned_to_user_id: Mapped[str | None] = mapped_column(String, ForeignKey("users.id"), nullable=True)
+    assigned_team_id: Mapped[str | None] = mapped_column(String, ForeignKey("teams.id"), nullable=True)
     employee_department_id: Mapped[str | None] = mapped_column(String, ForeignKey("departments.id"), nullable=True)
     primary_department_id: Mapped[str | None] = mapped_column(String, ForeignKey("departments.id"), nullable=True)
 
@@ -105,6 +106,7 @@ class Complaint(Base):
     tenant: Mapped["Tenant"] = relationship("Tenant", back_populates="complaints")
     employee: Mapped["User"] = relationship("User", back_populates="complaints", foreign_keys=[employee_id])
     assigned_to: Mapped["User | None"] = relationship("User", foreign_keys=[assigned_to_user_id])
+    assigned_team: Mapped["Team | None"] = relationship("Team", back_populates="complaints", foreign_keys=[assigned_team_id])
     employee_department_rel: Mapped["Department | None"] = relationship("Department", foreign_keys=[employee_department_id])
     primary_department_rel: Mapped["Department | None"] = relationship("Department", foreign_keys=[primary_department_id])
     cluster: Mapped["Cluster | None"] = relationship("Cluster", back_populates="complaints")

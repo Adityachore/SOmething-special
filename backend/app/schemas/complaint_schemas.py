@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 from datetime import datetime
 from typing import Any
 from app.db.models.complaint import ComplaintStatus, PriorityLevel, PrioritySource
@@ -33,7 +33,14 @@ class ComplaintUpdate(BaseModel):
 # ─── Action Payloads ─────────────────────────────────────────────────────────
 
 class AssignPayload(BaseModel):
-    assigned_to_user_id: str
+    assigned_to_user_id: str | None = None
+    assigned_team_id: str | None = None
+
+    @model_validator(mode="after")
+    def check_at_least_one(self) -> "AssignPayload":
+        if not self.assigned_to_user_id and not self.assigned_team_id:
+            raise ValueError("Must provide either assigned_to_user_id or assigned_team_id.")
+        return self
 
 
 class ResolvePayload(BaseModel):
@@ -114,6 +121,7 @@ class ComplaintResponse(BaseModel):
     tenant_id: str
     employee_id: str
     assigned_to_user_id: str | None
+    assigned_team_id: str | None = None
     title: str
     description: str
     primary_department: str | None

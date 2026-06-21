@@ -1,4 +1,4 @@
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -14,13 +14,18 @@ bearer_scheme = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
-    if not credentials:
+    token = request.cookies.get("access_token")
+    if not token and credentials:
+        token = credentials.credentials
+        
+    if not token:
         raise UnauthorizedError("No authentication token provided.")
     try:
-        payload = decode_access_token(credentials.credentials)
+        payload = decode_access_token(token)
         user_id: str = payload.get("sub")
         if not user_id:
             raise UnauthorizedError("Invalid token payload.")
@@ -29,7 +34,11 @@ async def get_current_user(
 
     result = await db.execute(
         select(User)
-        .options(selectinload(User.department_rel), selectinload(User.tenant))
+        .options(
+            selectinload(User.department_rel),
+            selectinload(User.tenant),
+            selectinload(User.team_memberships)
+        )
         .where(User.id == user_id, User.deleted_at.is_(None))
     )
     user = result.scalar_one_or_none()

@@ -3,21 +3,13 @@ import axios from 'axios';
 const api = axios.create({
   baseURL: 'http://localhost:8000/api/v1',
   headers: { 'Content-Type': 'application/json' },
-});
-
-api.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('access_token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
+  withCredentials: true,
 });
 
 api.interceptors.response.use(
   (r) => r,
   async (err) => {
     if (err.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.clear();
       window.location.href = '/login';
     }
     return Promise.reject(err);
@@ -29,14 +21,16 @@ export default api;
 // ─── Auth ───
 export const login = (email: string, password: string) =>
   api.post('/auth/login', { email, password });
-export const refreshToken = (refresh_token: string) =>
-  api.post('/auth/refresh', { refresh_token });
-export const logout = (refresh_token: string) =>
-  api.post('/auth/logout', { refresh_token });
+export const refreshToken = () =>
+  api.post('/auth/refresh');
+export const logout = () =>
+  api.post('/auth/logout');
 export const forgotPassword = (email: string) =>
   api.post('/auth/forgot-password', { email });
 export const resetPassword = (data: { token: string; new_password: string }) =>
   api.post('/auth/reset-password', data);
+export const getMe = () =>
+  api.get('/auth/me');
 
 // ─── Complaints (Employee) ───
 export const createComplaint = (data: {
@@ -66,7 +60,7 @@ export const getComplaint = (id: string) =>
   api.get(`/complaints/${id}`);
 export const startComplaint = (id: string) =>
   api.post(`/complaints/${id}/start`);
-export const assignComplaint = (id: string, data: { assigned_to_user_id: string }) =>
+export const assignComplaint = (id: string, data: { assigned_to_user_id?: string | null; assigned_team_id?: string | null }) =>
   api.post(`/complaints/${id}/assign`, data);
 export const resolveComplaint = (id: string, data: { resolution_note: string; root_cause?: string; visible_to_employee?: boolean }) =>
   api.post(`/complaints/${id}/resolve`, data);
@@ -197,8 +191,13 @@ export const setupKeyRoles = (data: {
 
 export const inviteMember = (data: {
   email: string;
-  role: 'ORG_ADMIN' | 'HR' | 'CMD' | 'DEPT_HEAD' | 'EMPLOYEE';
+  role: string;
   department_id?: string | null;
+  name?: string | null;
+  employee_id?: string | null;
+  designation?: string | null;
+  phone?: string | null;
+  date_of_joining?: string | null;
 }) => api.post('/org/invitations/invite', data);
 
 export const getInvitations = () =>
@@ -213,4 +212,21 @@ export const updateOrgSettings = (data: {
   allow_cmd_view_hr_sensitive_anonymized: boolean;
   allow_dept_head_view_hr_sensitive: boolean;
 }) => api.put('/org/settings', data);
+
+// ─── Teams & Committees ───
+export const getTeams = () =>
+  api.get('/org/teams');
+export const getTeam = (id: string) =>
+  api.get(`/org/teams/${id}`);
+export const createTeam = (data: { name: string; type: string }) =>
+  api.post('/org/teams', data);
+export const updateTeam = (id: string, data: { name?: string; type?: string; status?: string }) =>
+  api.put(`/org/teams/${id}`, data);
+export const deleteTeam = (id: string) =>
+  api.delete(`/org/teams/${id}`);
+export const addTeamMember = (teamId: string, data: { user_id: string; role_in_team?: string }) =>
+  api.post(`/org/teams/${teamId}/members`, data);
+export const removeTeamMember = (teamId: string, userId: string) =>
+  api.delete(`/org/teams/${teamId}/members/${userId}`);
+
 

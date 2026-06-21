@@ -22,41 +22,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const t = localStorage.getItem('access_token');
-    const u = localStorage.getItem('user');
-    if (t && u) { 
-      setToken(t); 
-      const parsedUser = JSON.parse(u);
-      setUser(parsedUser); 
-      
-      // Sync from profile if missing tenant_name
-      if (!parsedUser.tenant_name) {
-        import('@/lib/api').then(({ getProfile }) => {
-          getProfile().then(({ data }) => {
-            const updatedUser = { ...parsedUser, tenant_name: data.tenant_name, name: data.name };
-            localStorage.setItem('user', JSON.stringify(updatedUser));
-            setUser(updatedUser);
-          }).catch(() => {});
+    import('@/lib/api').then(({ getMe }) => {
+      getMe()
+        .then(({ data }) => {
+          setUser({
+            user_id: data.id,
+            role: data.role,
+            tenant_id: data.tenant_id,
+            tenant_name: data.department_name, // Using department as fallback or null
+            email: data.email,
+            name: data.name
+          });
+          setToken("cookie"); // dummy token to indicate logged in
+        })
+        .catch(() => {
+          setUser(null);
+          setToken(null);
+        })
+        .finally(() => {
+          setLoading(false);
         });
-      }
-    }
-    setLoading(false);
+    });
   }, []);
 
   const login = async (email: string, password: string) => {
     const { data } = await apiLogin(email, password);
-    localStorage.setItem('access_token', data.access_token);
-    localStorage.setItem('refresh_token', data.refresh_token);
-    const u = { user_id: data.user_id, role: data.role, tenant_id: data.tenant_id, tenant_name: data.tenant_name, email };
-    localStorage.setItem('user', JSON.stringify(u));
-    setToken(data.access_token);
-    setUser(u);
+    setUser({
+      user_id: data.user_id,
+      role: data.role,
+      tenant_id: data.tenant_id,
+      tenant_name: data.tenant_name,
+      email: data.email || email,
+      name: data.name
+    });
+    setToken("cookie");
   };
 
   const logout = () => {
-    const rt = localStorage.getItem('refresh_token');
-    if (rt) apiLogout(rt).catch(() => {});
-    localStorage.clear();
+    apiLogout().catch(() => {});
     setUser(null); setToken(null);
     window.location.href = '/login';
   };
