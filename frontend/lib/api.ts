@@ -9,7 +9,9 @@ const api = axios.create({
 api.interceptors.response.use(
   (r) => r,
   async (err) => {
-    if (err.response?.status === 401 && typeof window !== 'undefined') {
+    const url = err.config?.url || '';
+    const isAuthCheck = url.includes('/auth/me') || url.includes('/auth/refresh');
+    if (err.response?.status === 401 && typeof window !== 'undefined' && !isAuthCheck) {
       window.location.href = '/login';
     }
     return Promise.reject(err);
