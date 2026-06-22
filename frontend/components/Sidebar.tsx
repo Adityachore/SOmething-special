@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import {
   LayoutDashboard, FileText, Search, Bell, Users, BarChart3,
-  ClipboardList, Settings, LogOut, Shield, ChevronRight, PlusCircle
+  ClipboardList, Settings, LogOut, Shield, ChevronRight, PlusCircle, ShieldAlert
 } from 'lucide-react';
 
 const ROLE_MENUS: Record<string, { href: string; icon: React.ReactNode; label: string }[]> = {
@@ -61,6 +61,7 @@ const ROLE_MENUS: Record<string, { href: string; icon: React.ReactNode; label: s
     { href: '/admin/profile-requests', icon: <ClipboardList size={16}/>, label: 'Profile Requests' },
     { href: '/admin/analytics', icon: <BarChart3 size={16}/>, label: 'Analytics' },
     { href: '/admin/audit', icon: <ClipboardList size={16}/>, label: 'Audit Logs' },
+    { href: '/admin/security-audit', icon: <ShieldAlert size={16}/>, label: 'Security Audit' },
     { href: '/admin/settings', icon: <Settings size={16}/>, label: 'Settings' },
     { href: '/employee/profile', icon: <Users size={16}/>, label: 'My Profile' },
   ],
@@ -72,6 +73,7 @@ const ROLE_MENUS: Record<string, { href: string; icon: React.ReactNode; label: s
     { href: '/admin/profile-requests', icon: <ClipboardList size={16}/>, label: 'Profile Requests' },
     { href: '/admin/analytics', icon: <BarChart3 size={16}/>, label: 'Analytics' },
     { href: '/admin/audit', icon: <ClipboardList size={16}/>, label: 'Audit Logs' },
+    { href: '/admin/security-audit', icon: <ShieldAlert size={16}/>, label: 'Security Audit' },
     { href: '/admin/settings', icon: <Settings size={16}/>, label: 'Settings' },
     { href: '/employee/profile', icon: <Users size={16}/>, label: 'My Profile' },
   ],
