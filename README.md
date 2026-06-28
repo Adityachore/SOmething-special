@@ -65,6 +65,10 @@ graph TD
 | **📋 Governance** | Compliance Audits | Logs every status change, category update, priority override, or assignment in `complaint_audit_logs`. |
 | | Escalation Engine | Monitors SLA timings, warning handlers at 50% / 75% elapsed time, and triggering breach warnings. |
 | | Security & RBAC | Granular role-based access control. Handlers cannot see identity in HR-sensitive whistleblower cases. |
+| **🤝 Collaboration** | Team Management | Admins can create teams, manage members, and handle team-based complaints. |
+| | Invitations | Secure email invitations to join specific roles and teams. |
+| **🛡️ Security** | Cookie-Based Auth | Hardened security using httpOnly cookies for session management (no localStorage). |
+| | Security Audit Guide | Comprehensive internal guide with vulnerabilities, role threats, and audit checklists. |
 
 ---
 
@@ -76,6 +80,8 @@ graph TD
 | **CMD** | `cmd@demo.com` | `Cmd@1234` | Non-HR sensitive complaints in their respective department. |
 | **HR** | `hr@demo.com` | `Hr@1234` | HR-sensitive & Whistleblower cases across all departments. |
 | **Employee** | `employee@demo.com` | `Emp@1234` | Submitting complaints, tracking status, and rating resolutions. |
+| **Handler** | `handler@demo.com` | `Hand@1234` | Handles escalated complaints and resolves tickets efficiently. |
+| **Evaluator** | `evaluator@demo.com` | `Eval@1234` | Reviews and audits complaint resolutions for quality assurance. |
 
 ---
 
@@ -154,6 +160,6 @@ ai-complaint-analyzer/
 
 ## 🔒 Security & Data Compliance
 1. **Password Hashing:** Implemented using `bcrypt` to secure stored credentials.
-2. **Access Security:** Scoped JWT access and refresh tokens.
+2. **Access Security:** Scoped JWT access and refresh tokens stored securely via httpOnly cookies, completely replacing localStorage for enhanced security.
 3. **Sensitive Columns:** The system enforces complete anonymity for whistleblower complaints; normal department heads (CMD) cannot fetch the submitter's identity for files flagged as `is_hr_sensitive`.
 4. **File Safety:** Attachment storage uses randomly generated UUID hashes for storage keys to prevent path traversal attacks.
